@@ -1,0 +1,25 @@
+FC=mpiifort
+FFLAGS=-Ofast -qopenmp -cpp -DINTEL -DCPU -g 
+MKLPATH=${MKLROOT}/lib/intel64_lin
+MKLINCLUDE=${MKLROOT}/include
+#LDFLAGS=-L${MKLPATH} -I${MKLINCLUDE} -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm
+LDFLAGS=-L${MKLPATH} -I${MKLINCLUDE} -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+EXES=rimp2
+
+all: $(EXES)
+
+rimp2: rimp2_energy_whole_KERN.o
+	$(FC) -o $@ $(FFLAGS) $^ $(LDFLAGS)
+
+
+.SUFFIXES:
+.SUFFIXES: .c .o .f90 .cu .cpp .cuf
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c $<
+.f90.o:
+	$(FC) $(FFLAGS) -c $<
+.PHONY: clean
+clean:
+	rm -rf *.o *.mod $(EXES)

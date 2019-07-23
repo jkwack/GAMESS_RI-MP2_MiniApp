@@ -1,5 +1,6 @@
  This contains a minikernel for the RI-MP2 OpenMP
  Fortran code by Buu Pham.
+ Updated by JaeHyuk Kwack.
 
  An input file is ben_kernel.inp
 
