@@ -1,0 +1,9 @@
+Makefile
+rimp2
+rimp2-cpu
+rimp2-ser
+*.o
+*.mod
+fort.500
+cor.kern
+
