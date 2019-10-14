@@ -222,8 +222,6 @@
 #if !defined(NOMPI)
       E2=0.0D00
       call MPI_REDUCE(E2_mpi,E2,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ierr) 
-<<<<<<< HEAD
-
       dt_mean = 0.0D0
       dt_min = 0.0D0
       dt_max = 0.0D0
@@ -231,12 +229,12 @@
       call MPI_REDUCE(dt_mpi,dt_max,1,MPI_DOUBLE_PRECISION,MPI_MAX,0,MPI_COMM_WORLD,ierr)
       call MPI_REDUCE(dt_mpi,dt_mean,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ierr)
       dt_mean = dt_mean/NPROC
-
-=======
 #else
       E2=E2_mpi
+      dt_min = dt_mpi
+      dt_max = dt_mpi
+      dt_mean = dt_mpi
 #endif
->>>>>>> 21f22d9... Update codes for Intel_DGA and add NOMPI for non MPI compilers
 
       if(MASWRK) THEN
          write(*,'(A25,I15)') "mpi processes:", NPROC
