@@ -47,11 +47,8 @@
 #endif
       MASWRK=ME.eq.0
 
-<<<<<<< HEAD
-      if(MASWRK) THEN
-=======
 
->>>>>>> 21f22d9... Update codes for Intel_DGA and add NOMPI for non MPI compilers
+      if(MASWRK) THEN
 #ifdef CPU
         write(*,*) 'You are running the code with CPU OpenMP'
 #elif defined(NVBLAS)
