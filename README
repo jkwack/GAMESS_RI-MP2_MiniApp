@@ -2,7 +2,10 @@
  Fortran code by Buu Pham.
  Updated by JaeHyuk Kwack(jkwack@anl.gov).
 
- An input file is ben_kernel.inp
+ An input file is ben_kernel.inp that is the smallest input. 
+ You can find bigger inputs at the following link:
+ https://anl.box.com/s/4e28hz3fcobhl61otlpqrj779bnd1qjt
+ On NVIDIA V100 GPUs, we recommend to use c60, w30, or w60 inputs to see meaningful speedups. 
 
  1. Submit an interactive job:
     $ bsub -W 1:00 -nnodes 1 -P gen129 -Is $SHELL
