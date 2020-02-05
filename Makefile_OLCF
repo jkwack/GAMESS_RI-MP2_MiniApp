@@ -1,0 +1,15 @@
+FC=xlf90_r
+
+EXE_TUTORIAL=my_rimp2
+EXE_TUTORIAL_V2=my_rimp2_v2
+
+all: $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2)
+
+$(EXE_TUTORIAL): GAMESS-RIMP2-CorrEng-Tutorial.f90
+	$(FC) -qsmp=omp -qoffload $^ -o my_rimp2 -lnvblas -L$(OLCF_ESSL_ROOT)/lib64 -lessl
+
+$(EXE_TUTORIAL_V2): GAMESS-RIMP2-CorrEng-Tutorial-V2.f90
+	$(FC) -qsmp=omp -qoffload $^ -o my_rimp2_v2 -lnvblas -L$(OLCF_ESSL_ROOT)/lib64 -lessl
+
+clean:
+	rm -rf *.o *.mod $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2)
