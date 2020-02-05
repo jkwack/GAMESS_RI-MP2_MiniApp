@@ -1,8 +1,6 @@
 FC=mpifort
-FFLAGS=-qsmp=omp -qsuffix=cpp=f90 -DCPU -g -L$(OLCF_ESSL_ROOT)/lib64 -lessl
-#FFLAGS=-qsmp=omp -qsuffix=cpp=f90 -g -L$(OLCF_ESSL_ROOT)/lib64 -lessl
-# offloading:
-#FFLAGS=-qsmp=omp -g -qoffload
+FFLAGS=-qsmp=omp -qsuffix=cpp=f90 -DCPU -g 
+LDFLAGS=-L$(OLCF_ESSL_ROOT)/lib64 -lessl
 EXES=rimp2
 
 all: $(EXES)
