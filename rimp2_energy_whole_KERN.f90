@@ -1,3 +1,6 @@
+!  Copyright (C) 2020, Argonne National Laboratory. All Rights Reserved.
+!  Licensed under the NCSA open source license
+
       module sharedData
 #if defined(CUBLAS) || defined(CUBLASXT)
       use cublasf
