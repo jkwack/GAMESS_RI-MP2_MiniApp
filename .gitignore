@@ -20,6 +20,7 @@ cor.kern
 c60.kern
 w30.kern
 w60.kern
+nvblas.conf
 nvprof_timeline_*
 rimp2-w30_w60-*
 

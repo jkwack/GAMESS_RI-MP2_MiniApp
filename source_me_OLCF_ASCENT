@@ -1,0 +1,5 @@
+module load cuda essl
+rm -f Makefile nvblas.conf
+ln -s Makefile_OLCF Makefile
+ln -s nvblas.conf.ASCENT nvblas.conf
+

@@ -1,3 +1,0 @@
-module load cuda essl
-rm -f Makefile
-ln -s Makefile_OLCF Makefile
