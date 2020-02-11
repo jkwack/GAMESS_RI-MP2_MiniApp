@@ -1,0 +1,7 @@
+module load cuda essl
+rm -f Makefile nvblas.conf run_cpu.sh run_gpu.sh
+ln -s Makefile_OLCF Makefile
+ln -s nvblas.conf.SUMMIT nvblas.conf
+ln -s run_cpu_OLCF.sh run_cpu.sh
+ln -s run_gpu_OLCF.sh run_gpu.sh
+

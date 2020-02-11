@@ -1,0 +1,57 @@
+FC=mpifort
+
+SRC=rimp2_energy_whole_KERN.f90
+SRC_CUBLASF=cublasf.f90
+
+EXE_NVBLAS=rimp2-nvblas
+FFLAGS_NVBLAS=-qsmp=omp -qoffload -qsuffix=cpp=f90 -DNVBLAS -g
+LDFLAGS_NVBLAS=-lnvblas -L$(OLCF_ESSL_ROOT)/lib64 -lessl
+
+EXE_CUBLAS=rimp2-cublas
+FFLAGS_CUBLAS=-qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLAS -g
+LDFLAGS_CUBLAS=-lcublas cublasf.o
+
+EXE_CUBLASXT=rimp2-cublasxt
+FFLAGS_CUBLASXT=-qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLASXT -g
+
+EXE_ESSL=rimp2-essl
+FFLAGS_ESSL=-qsmp=omp -qsuffix=cpp=f90 -DCPU -g 
+LDFLAGS_ESSL=-L$(OLCF_ESSL_ROOT)/lib64 -lessl
+
+EXE_SERIAL=rimp2-serial
+FFLAGS_SERIAL=-qsmp=omp -qsuffix=cpp=f90 -g
+
+EXES=$(EXE_NVBLAS) $(EXE_CUBLAS) $(EXE_CUBLASXT) $(EXE_ESSL) $(EXE_SERIAL)
+
+all: $(EXES)
+
+
+$(EXE_NVBLAS): $(SRC)
+	$(FC) $(FFLAGS_NVBLAS) $^ -o $@ $(LDFLAGS_NVBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_CUBLAS): $(SRC)
+	$(FC) $(FFLAGS_CUBLAS) -c $(SRC_CUBLASF)
+	$(FC) $(FFLAGS_CUBLAS) $^ -o $@ $(LDFLAGS_CUBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_CUBLASXT): $(SRC)
+	$(FC) $(FFLAGS_CUBLASXT) -c $(SRC_CUBLASF)
+	$(FC) $(FFLAGS_CUBLASXT) $^ -o $@ $(LDFLAGS_CUBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_ESSL): $(SRC)
+	$(FC) $(FFLAGS_ESSL) $^ -o $@ $(LDFLAGS_ESSL)
+	rm -rf *.o *.mod
+
+$(EXE_SERIAL): $(SRC)
+	$(FC) $(FFLAGS_SERIAL) $^ -o $@ $(LDFLAGS_ESSL)
+	rm -rf *.o *.mod
+
+
+.SUFFIXES:
+.SUFFIXES: .c .o .f90 .cu .cpp .cuf
+.PHONY: clean
+clean:
+	rm -rf *.o *.mod $(EXES)
+

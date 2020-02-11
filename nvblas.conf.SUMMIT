@@ -9,11 +9,11 @@
 NVBLAS_LOGFILE  nvblas.log
 
 # Enable trace log of every intercepted BLAS calls
-NVBLAS_TRACE_LOG_ENABLED
+#NVBLAS_TRACE_LOG_ENABLED
 
 #Put here the CPU BLAS fallback Library of your choice
 #It is strongly advised to use full path to describe the location of the CPU Library
-NVBLAS_CPU_BLAS_LIB  /sw/ascent/essl/6.2.0-20190419/essl/6.2/lib64/libessl.so
+NVBLAS_CPU_BLAS_LIB  /sw/summit/essl/6.2.0-20190419/essl/6.2/lib64/libessl.so
 #NVBLAS_CPU_BLAS_LIB  /usr/lib/libopenblas.so
 #NVBLAS_CPU_BLAS_LIB  <mkl_path_installtion>/libmkl_rt.so
 

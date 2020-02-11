@@ -1,0 +1,22 @@
+FC=mpiifort
+
+SRC=rimp2_energy_whole_KERN.f90
+
+EXE_MKL=rimp2-mkl
+FFLAGS_MKL=-Ofast -qopenmp -cpp -DINTEL -DCPU -g 
+LDFLAGS_MKL=-L${MKLROOT}/lib/intel64_lin -I${MKLROOT}/include -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+
+EXES=$(EXE_MKL)
+
+all: $(EXES)
+
+$(EXE_MKL): $(SRC)
+	$(FC) $(FFLAGS_MKL) $^ -o $@ $(LDFLAGS_MKL)
+	rm -rf *.o *.mod
+
+
+.SUFFIXES:
+.SUFFIXES: .c .o .f90 .cu .cpp .cuf
+.PHONY: clean
+clean:
+	rm -rf *.o *.mod $(EXES)
