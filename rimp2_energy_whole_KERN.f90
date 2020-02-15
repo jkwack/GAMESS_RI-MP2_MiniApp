@@ -3,20 +3,20 @@
 
       module rimp2_shared
       use omp_lib
-      #if defined(CUBLAS) || defined(CUBLASXT)
+#if defined(CUBLAS) || defined(CUBLASXT)
         use cublasf
-      #endif
+#endif
       ! mpi stuff
       integer:: ME, NPROC
       logical:: MASWRK
 
-      #if defined(CUBLAS) || defined(CUBLASXT)
+#if defined(CUBLAS) || defined(CUBLASXT)
         integer(c_int)   :: cublas_return
         type(c_ptr)      :: cublas_handle
-        #if defined(CUBLASXT)
+#if defined(CUBLASXT)
           integer(c_int),dimension(1) :: cublasXt_deviceId
-        #endif
-      #endif
+#endif
+#endif
 
       end !*************************************************************
 
@@ -37,41 +37,41 @@
       double precision:: dt_mpi, dt_min, dt_max, dt_mean
 
 
-      #if !defined(NOMPI)
+#if !defined(NOMPI)
         ! mpi init
         include 'mpif.h'
         call MPI_INIT(ierror)
         call MPI_COMM_SIZE(MPI_COMM_WORLD, NPROC, ierror)
         call MPI_COMM_RANK(MPI_COMM_WORLD, ME, ierror)
-      #else
+#else
         NPROC=1
         ME=0
-      #endif
+#endif
       MASWRK=ME.eq.0
 
 
       if(MASWRK) THEN
-      #ifdef CPU
+#ifdef CPU
         write(*,*) 'You are running the code with CPU OpenMP'
-      #elif defined(NVBLAS)
+#elif defined(NVBLAS)
         write(*,*) 'You are running the code with nvblas on GPU'
-      #elif defined(CUBLAS)
+#elif defined(CUBLAS)
         write(*,*) 'You are running the code with cublas on GPU'
-      #elif defined(CUBLASXT)
+#elif defined(CUBLASXT)
         write(*,*) 'You are running the code with cublasxt on GPU'
-      #else
+#else
         write(*,*) 'You are running the code serially'
-      #endif
+#endif
       endif
 
-      #if defined(CUBLAS)
+#if defined(CUBLAS)
         cublas_return = cublascreate_v2(cublas_handle)
-      #elif defined(CUBLASXT)
+#elif defined(CUBLASXT)
         cublas_return = cublasXtcreate(cublas_handle)
         cublasXt_deviceId(1) = 0      ! only for one GPU
         cublas_return = cublasXtDeviceSelect(cublas_handle, 1, cublasXt_deviceId)  ! only for one GPU
         cublas_return = cublasXtSetBlockDim(cublas_handle, 2048)
-      #endif
+#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!! read input for gpu kernel !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -81,11 +81,11 @@
 
       ! open input file
       open(unit=500, file=filename,status='old',form="unformatted", &
-      #if defined(INTEL)
+#if defined(INTEL)
              access='direct',recl=10,iostat=ierr,action='read')
-      #else
+#else
              access='direct',recl=40,iostat=ierr,action='read')
-      #endif
+#endif
 
       ! read parameters
       read(500,iostat=ierr,rec=1) NAUXBASD
@@ -182,16 +182,16 @@
       et=omp_get_wtime()
       dt_mpi = et - st
 
-      #if defined(CUBLAS)
+#if defined(CUBLAS)
         cublas_return = cublasdestroy_v2(cublas_handle)
-      #elif defined(CUBLASXT)                  
+#elif defined(CUBLASXT)
         cublas_return = cublasXtdestroy(cublas_handle)
-      #endif
+#endif
 
   120 CONTINUE
 
 
-      #if !defined(NOMPI)
+#if !defined(NOMPI)
         E2=0.0D00
         call MPI_REDUCE(E2_mpi,E2,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ierr) 
         dt_mean = 0.0D0
@@ -201,12 +201,12 @@
         call MPI_REDUCE(dt_mpi,dt_max,1,MPI_DOUBLE_PRECISION,MPI_MAX,0,MPI_COMM_WORLD,ierr)
         call MPI_REDUCE(dt_mpi,dt_mean,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ierr)
         dt_mean = dt_mean/NPROC
-      #else
+#else
         E2=E2_mpi
         dt_min = dt_mpi
         dt_max = dt_mpi
         dt_mean = dt_mpi
-      #endif
+#endif
 
       if(MASWRK) THEN
         ediff=E2-E2_ref
@@ -227,9 +227,9 @@
         endif
       endif
 
-      #if !defined(NOMPI)
+#if !defined(NOMPI)
         call MPI_FINALIZE(ierr)
-      #endif
+#endif
 
       END !*************************************************************
 
@@ -276,14 +276,14 @@
       ! local data
       double precision,save :: E2_omp
       double precision,allocatable,dimension(:,:,:),save :: QVV
-      #ifdef CPU
+#ifdef CPU
         !$omp threadprivate(E2_omp,QVV)
-      #endif
+#endif
 
       ! turn off dynamics threadss
       CALL OMP_SET_DYNAMIC(.FALSE.)
 
-      #ifdef CPU
+#ifdef CPU
         ! env num threads
         Nthreads=omp_get_max_threads()
 
@@ -292,19 +292,19 @@
         !$omp shared(LddiActStart,LddiActEnd,                             &   
         !$omp        NACT,NVIR,NAUXBASD,B32,eij,eab,E2,NQVV)              &
         !$omp private(IACT,JACT,iQVV,IACTmod)
-      #endif
+#endif
 
       E2_omp = 0.0D00
       ALLOCATE(QVV(NVIR,NQVV,NVIR))
 
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp target enter data map(alloc: QVV) 
         !$omp target enter data map(to: eij,eab,B32) 
-      #endif
+#endif
 
-      #ifdef CPU
+#ifdef CPU
         !$omp do schedule(DYNAMIC)
-      #endif
+#endif
       DO JACT=LddiActStart,LddiActEnd
         DO IACTmod=1,(JACT-1)/NQVV+1
           IACT = (IACTmod-1)*NQVV+1
@@ -319,24 +319,24 @@
 
         ENDDO
       ENDDO
-      #ifdef CPU
+#ifdef CPU
         !$omp end do
-      #endif
+#endif
 
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp target exit data map(release: QVV,eij,eab,B32) 
-      #endif
+#endif
 
-      #ifdef CPU
+#ifdef CPU
         !$omp atomic
-      #endif
+#endif
       E2 = E2 + E2_omp
 
       DEALLOCATE(QVV)
 
-      #ifdef CPU
+#ifdef CPU
         !$OMP END PARALLEL
-      #endif
+#endif
 
       END !*************************************************************
 
@@ -361,15 +361,15 @@
       double precision :: QVV(NVIR,iQVV,NVIR)
 
 
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp target data use_device_ptr(BI,BJ,QVV)
-      #endif
-      #if defined(CUBLAS) || defined(CUBLASXT)
-        #if defined(CUBLAS)
+#endif
+#if defined(CUBLAS) || defined(CUBLASXT)
+#if defined(CUBLAS)
           cublas_return =  CUBLASDGEMM_v2 &
-        #elif defined(CUBLASXT)
+#elif defined(CUBLASXT)
           cublas_return =  cublasXtDgemm  &
-        #endif
+#endif
                    (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                   1.0D00, BI,NAUXBASD,                                  &
@@ -377,28 +377,28 @@
                   0.0D00, QVV,NVIR*iQVV)
         cublas_return = cudaDeviceSynchronize()
 
-      #else
+#else
         CALL DGEMM &
            ('T','N',  &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                   1.0D00, BI,NAUXBASD,                                  &
                           BJ,NAUXBASD,                                  &
                   0.0D00, QVV,NVIR*iQVV)
-      #endif
+#endif
 
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp end target data
-      #endif
+#endif
 
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp target map(tofrom:E2)
         !$omp teams distribute reduction(+:E2) 
-      #endif
+#endif
       DO IC=1,iQVV
         E2_t = 0.0D00
-        #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
           !$omp parallel do reduction(+:E2_t) collapse(2)
-        #endif
+#endif
         DO IB=1,NVIR
           DO IA=1,NVIR
             Tijab=QVV(IA,IC,IB)/(eij(IACT+IC-1,JACT)-eab(IA,IB))
@@ -406,17 +406,17 @@
             E2_t=E2_t + Tijab*(Q_t-QVV(IB,IC,IA))
           ENDDO
         ENDDO
-        #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
           !$omp end parallel do
-        #endif
+#endif
          FAC=2.0D00
          IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
          E2 = E2 + FAC*E2_t
       ENDDO
-      #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
         !$omp end teams distribute
         !$omp end target
-      #endif
+#endif
 
       END
 
