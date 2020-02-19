@@ -269,3 +269,107 @@ In order to build all executables and test them with benz.kern, you may run `./r
     
     bash-4.2$ 
  
+
+## Figure-of-Merit (FOM)
+
+The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app reports three walltimes from MPI ranks: minimum, mean, and maximum. The time-to-solution (TTS) is the maximum wall time. For the baseline benchmark, use `w60.kern`. The reference data on SUMMIT are as follows:
+
+<table>
+    <thead>
+    <tr>
+        <td align="center" colspan="2">  </td>
+        <td align="center" colspan="3">w30.kern </td>
+        <td align="center" colspan="3">w60.kern </td>
+    </tr><tr>
+        <td align="center">Number of Nodes </td> 
+        <td align="center">NMPI </td> 
+        <td align="center">rimp2-cublas</td>
+        <td align="center">rimp2-cublasxt</td>
+        <td align="center">rimp2-essl</td>
+        <td align="center">rimp2-cublas</td>
+        <td align="center">rimp2-cublasxt</td>
+        <td align="center">rimp2-essl</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td align="center">1 </td>
+        <td align="center">1 </td>
+        <td align="center">2.899 </td>
+        <td align="center">2.314 </td>
+        <td align="center">86.324 </td>
+        <td align="center">87.301 </td>
+        <td align="center">72.903 </td>
+        <td align="center">2727.419 </td>
+    </tr><tr>
+        <td align="center">1 </td>
+        <td align="center">2 </td>
+        <td align="center">1.582 </td>
+        <td align="center">1.287 </td>
+        <td align="center">43.848 </td>
+        <td align="center">44.646 </td>
+        <td align="center">37.512 </td>
+        <td align="center">1386.807 </td>
+    </tr><tr>
+        <td align="center">1 </td>
+        <td align="center">4 </td>
+        <td align="center">0.899 </td>
+        <td align="center">0.759 </td>
+        <td align="center">26.768 </td>
+        <td align="center">23.181 </td>
+        <td align="center">19.67 </td>
+        <td align="center">792.305 </td>
+    </tr><tr>
+        <td align="center">1 </td>
+        <td align="center">6 </td>
+        <td align="center">0.664 </td>
+        <td align="center">0.643 </td>
+        <td align="center">19.333 </td>
+        <td align="center">16.08 </td>
+        <td align="center">14.074 </td>
+        <td align="center">563.707 </td>
+    </tr><tr>
+        <td align="center">2 </td>
+        <td align="center">12 </td>
+        <td align="center">0.447 </td>
+        <td align="center">0.397 </td>
+        <td align="center">12.626 </td>
+        <td align="center">8.845 </td>
+        <td align="center">7.999 </td>
+        <td align="center">317.892 </td>
+    </tr><tr>
+        <td align="center">4 </td>
+        <td align="center">24 </td>
+        <td align="center">0.402 </td>
+        <td align="center">0.379 </td>
+        <td align="center">9.358 </td>
+        <td align="center">5.383 </td>
+        <td align="center">4.921 </td>
+        <td align="center">212.748 </td>
+    </tr><tr>
+        <td align="center">8 </td>
+        <td align="center">48 </td>
+        <td align="center">0.337 </td>
+        <td align="center">0.308 </td>
+        <td align="center">9.347 </td>
+        <td align="center">3.722 </td>
+        <td align="center">3.687 </td>
+        <td align="center">154.441 </td>
+    </tr><tr>
+        <td align="center">16 </td>
+        <td align="center">96 </td>
+        <td align="center">0.358 </td>
+        <td align="center">0.332 </td>
+        <td align="center">9.349 </td>
+        <td align="center">2.923 </td>
+        <td align="center">3.169 </td>
+        <td align="center">150.704 </td>
+    </tr>
+    </tbody>
+<caption> Time-to-Solution in second (1 GPU/MPI for rimp2-cublas & rimp2-cublasxt, 7 threads/MPI for rimp2-essl)</caption>
+</table>
+
+
+<img src="SpeedUp_w30_w60.png" height="350"/>   <img src="SpeedUp_cuBLASXT_ESSL.png" height="350"/>
+
+
