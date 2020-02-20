@@ -45,7 +45,7 @@ On NVIDIA V100 GPUs, we recommend to use c60.kern, w30.kern, or w60.kern inputs 
 
 | cor.kern  | c60.kern  | w60.kern  |
 | :-:       |:-:        | :-:       |
-|<img src="cor.png" height="240"/> |<img src="c60.png" height="300"/> | <img src="w60.png" height="300"/>  |
+|<img src="cor.png" height="240"/> |<img src="c60.png" height="240"/> | <img src="w60.png" height="240"/>  |
 
 
 
@@ -117,192 +117,13 @@ The above data sets require significant I/O times before computing the correlati
         # You may modify this example script for your own tests.
 
 
-### A quick test for build and validation
-In order to build all executables and test them with benz.kern, you may run `./run_after_rebuild.sh`. The following is an example on SUMMIT:
-
-    bash-4.2$ . source_me_OLCF 
-    bash-4.2$ ./run_after_rebuild.sh 
-    rm -rf *.o *.mod rimp2-nvblas rimp2-cublas rimp2-cublasxt rimp2-essl rimp2-serial
-    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DNVBLAS -g rimp2_energy_whole_KERN.f90 -o rimp2-nvblas -lnvblas -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
-    ** rimp2_shared   === End of Compilation 1 ===
-    ** mp2correng   === End of Compilation 2 ===
-    ** rimp2_trape_dec   === End of Compilation 3 ===
-    ** rimp2_energy_whole   === End of Compilation 4 ===
-    ** rimp2_energyij   === End of Compilation 5 ===
-    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
-    rm -rf *.o *.mod
-    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLAS -g -c cublasf.f90
-    ** cublasf   === End of Compilation 1 ===
-    1501-510  Compilation successful for file cublasf.f90.
-    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLAS -g rimp2_energy_whole_KERN.f90 -o rimp2-cublas -lcublas cublasf.o
-    ** rimp2_shared   === End of Compilation 1 ===
-    ** mp2correng   === End of Compilation 2 ===
-    ** rimp2_trape_dec   === End of Compilation 3 ===
-    ** rimp2_energy_whole   === End of Compilation 4 ===
-    ** rimp2_energyij   === End of Compilation 5 ===
-    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
-    rm -rf *.o *.mod
-    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLASXT -g -c cublasf.f90
-    ** cublasf   === End of Compilation 1 ===
-    1501-510  Compilation successful for file cublasf.f90.
-    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLASXT -g rimp2_energy_whole_KERN.f90 -o rimp2-cublasxt -lcublas cublasf.o
-    ** rimp2_shared   === End of Compilation 1 ===
-    ** mp2correng   === End of Compilation 2 ===
-    ** rimp2_trape_dec   === End of Compilation 3 ===
-    ** rimp2_energy_whole   === End of Compilation 4 ===
-    ** rimp2_energyij   === End of Compilation 5 ===
-    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
-    rm -rf *.o *.mod
-    mpifort -qsmp=omp -qsuffix=cpp=f90 -DCPU -g  rimp2_energy_whole_KERN.f90 -o rimp2-essl -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
-    ** rimp2_shared   === End of Compilation 1 ===
-    ** mp2correng   === End of Compilation 2 ===
-    ** rimp2_trape_dec   === End of Compilation 3 ===
-    ** rimp2_energy_whole   === End of Compilation 4 ===
-    ** rimp2_energyij   === End of Compilation 5 ===
-    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
-    rm -rf *.o *.mod
-    mpifort -qsmp=omp -qsuffix=cpp=f90 -g rimp2_energy_whole_KERN.f90 -o rimp2-serial -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
-    ** rimp2_shared   === End of Compilation 1 ===
-    ** mp2correng   === End of Compilation 2 ===
-    ** rimp2_trape_dec   === End of Compilation 3 ===
-    ** rimp2_energy_whole   === End of Compilation 4 ===
-    ** rimp2_energyij   === End of Compilation 5 ===
-    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
-    rm -rf *.o *.mod
-    Running this script with 1 node(s) with up to 6 GPUs:
-       NMPI is set to 2.
-       INPUT is set to benz.kern. For another INPUT, use INPUT=xxxx before this job script.
-       EXEC is set to rimp2-cublasxt rimp2-cublas rimp2-nvblas. For another EXEC, use EXEC='x y' before this job script.
-
-    
-    [[[Running rimp2-cublasxt with 2 MPI rank(s)...]]]
-     You are running the code with cublasxt on GPU
-         NQVV =        15
-         Memory Footprint:
-              B32(  39060,   15) =      4.6872 MB
-              eij(     15,   15) =      0.0018 MB
-              eab(     93,   93) =      0.0692 MB
-              QVV(  93, 15,  93) =      1.0379 MB
-    
-         Results:
-                                   Number of MPI ranks   =     2
-                                   Number of OMP threads =     1
-                 Rel. error of computed MP2 corr. energy =  0.28444E-15
-                                   Wall time (minimum)   =    0.002 sec
-                                   Wall time (mean)      =    0.003 sec
-                                   Wall time (maximum)   =    0.004 sec
-              Passed :-) 
-    
-    
-    
-    
-    
-    [[[Running rimp2-cublas with 2 MPI rank(s)...]]]
-     You are running the code with cublas on GPU
-         NQVV =        15
-         Memory Footprint:
-              B32(  39060,   15) =      4.6872 MB
-              eij(     15,   15) =      0.0018 MB
-              eab(     93,   93) =      0.0692 MB
-              QVV(  93, 15,  93) =      1.0379 MB
-    
-         Results:
-                                   Number of MPI ranks   =     2
-                                   Number of OMP threads =     1
-                 Rel. error of computed MP2 corr. energy =  0.28444E-15
-                                   Wall time (minimum)   =    0.002 sec
-                                   Wall time (mean)      =    0.002 sec
-                                   Wall time (maximum)   =    0.002 sec
-              Passed :-) 
-    
-    
-    
-    
-    
-    [[[Running rimp2-nvblas with 2 MPI rank(s)...]]]
-    [NVBLAS] NVBLAS_CONFIG_FILE environment variable is NOT set : relying on default config filename 'nvblas.conf'
-    [NVBLAS] Cannot Log File 'nvblas.log'
-    [NVBLAS] Using devices :0 
-    [NVBLAS] Config parsed
-    [NVBLAS] NVBLAS_CONFIG_FILE environment variable is NOT set : relying on default config filename 'nvblas.conf'
-    [NVBLAS] Cannot Log File 'nvblas.log'
-    [NVBLAS] Using devices :0 
-    [NVBLAS] Config parsed
-     You are running the code with nvblas on GPU
-         NQVV =        15
-         Memory Footprint:
-              B32(  39060,   15) =      4.6872 MB
-              eij(     15,   15) =      0.0018 MB
-              eab(     93,   93) =      0.0692 MB
-              QVV(  93, 15,  93) =      1.0379 MB
-    
-         Results:
-                                   Number of MPI ranks   =     2
-                                   Number of OMP threads =     1
-                 Rel. error of computed MP2 corr. energy =  0.28444E-15
-                                   Wall time (minimum)   =    0.002 sec
-                                   Wall time (mean)      =    0.003 sec
-                                   Wall time (maximum)   =    0.004 sec
-              Passed :-) 
-    
-    
-    
-    Running this script with 1 node(s) with up to 42 CPU threads in total:
-       NMPI is set to 2.
-       NTHREAD is set to 21. For another NTHREAD, use NTHREAD=x before this job script.
-       INPUT is set to benz.kern. For another INPUT, use INPUT=xxxx before this job script.
-       EXEC is set to rimp2-essl rimp2-serial. For another EXEC, use EXEC='x y' before this job script.
-    
-    
-    [[[Running rimp2-essl with 2 MPI rank(s) and 21 threads/MPI ...]]]
-     You are running the code with CPU OpenMP
-         NQVV =        15
-         Memory Footprint:
-              B32(  39060,   15) =      4.6872 MB
-              eij(     15,   15) =      0.0018 MB
-              eab(     93,   93) =      0.0692 MB
-              QVV(  93, 15,  93) =      1.0379 MB
-    
-         Results:
-                                   Number of MPI ranks   =     2
-                                   Number of OMP threads =    21
-                 Rel. error of computed MP2 corr. energy =  0.00000E+00
-                                   Wall time (minimum)   =    0.004 sec
-                                   Wall time (mean)      =    0.005 sec
-                                   Wall time (maximum)   =    0.006 sec
-              Passed :-) 
-    
-    
-    
-    
-    
-    [[[Running rimp2-serial with 2 MPI rank(s) and 21 threads/MPI ...]]]
-     You are running the code serially
-         NQVV =        15
-         Memory Footprint:
-              B32(  39060,   15) =      4.6872 MB
-              eij(     15,   15) =      0.0018 MB
-              eab(     93,   93) =      0.0692 MB
-              QVV(  93, 15,  93) =      1.0379 MB
-    
-         Results:
-                                   Number of MPI ranks   =     2
-                                   Number of OMP threads =    21
-                 Rel. error of computed MP2 corr. energy =  0.00000E+00
-                                   Wall time (minimum)   =    0.021 sec
-                                   Wall time (mean)      =    0.023 sec
-                                   Wall time (maximum)   =    0.025 sec
-              Passed :-) 
-    
-    
-    
-    bash-4.2$ 
- 
-
 ## Figure-of-Merit (FOM)
 
 The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app reports three walltimes from MPI ranks: minimum, mean, and maximum. The time-to-solution (TTS) is the maximum wall time. For the baseline benchmark, use `w60.kern`. The reference data on SUMMIT are as follows:
 
+#### Time-to-Solution in second: maximum wall time and FOM 
+* 1 GPU/MPI for rimp2-cublas & rimp2-cublasxt
+* 7 threads/MPI for rimp2-essl
 <table>
     <thead>
     <tr>
@@ -395,10 +216,298 @@ The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app rep
         <td align="center">150.704 </td>
     </tr>
     </tbody>
-<caption> Time-to-Solution in second (1 GPU/MPI for rimp2-cublas & rimp2-cublasxt, 7 threads/MPI for rimp2-essl)</caption>
 </table>
 
 
 <img src="SpeedUp_w30_w60.png" height="350"/>   <img src="SpeedUp_cuBLASXT_ESSL.png" height="350"/>
+
+
+## Examples of runs
+
+### A quick test for build and validation
+In order to build all executables and test them with benz.kern, you may run `./run_after_rebuild.sh`. The following is an example on SUMMIT:
+
+    bash-4.2$ . source_me_OLCF 
+    bash-4.2$ ./run_after_rebuild.sh
+    rm -rf *.o *.mod rimp2-nvblas rimp2-cublas rimp2-cublasxt rimp2-essl rimp2-serial
+    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DNVBLAS -g rimp2_energy_whole_KERN.f90 -o rimp2-nvblas -lnvblas -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
+    ** rimp2_shared   === End of Compilation 1 ===
+    ** rimp2_input   === End of Compilation 2 ===
+    ** mp2correng   === End of Compilation 3 ===
+    ** rimp2_trape_dec   === End of Compilation 4 ===
+    ** rimp2_energy_whole   === End of Compilation 5 ===
+    ** rimp2_energyij   === End of Compilation 6 ===
+    ** initialization   === End of Compilation 7 ===
+    ** read_input_file   === End of Compilation 8 ===
+    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
+    rm -rf *.o *.mod
+    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLAS -g -c cublasf.f90
+    ** cublasf   === End of Compilation 1 ===
+    1501-510  Compilation successful for file cublasf.f90.
+    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLAS -g rimp2_energy_whole_KERN.f90 -o rimp2-cublas -lcublas cublasf.o
+    ** rimp2_shared   === End of Compilation 1 ===
+    ** rimp2_input   === End of Compilation 2 ===
+    ** mp2correng   === End of Compilation 3 ===
+    ** rimp2_trape_dec   === End of Compilation 4 ===
+    ** rimp2_energy_whole   === End of Compilation 5 ===
+    ** rimp2_energyij   === End of Compilation 6 ===
+    ** initialization   === End of Compilation 7 ===
+    ** read_input_file   === End of Compilation 8 ===
+    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
+    rm -rf *.o *.mod
+    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLASXT -g -c cublasf.f90
+    ** cublasf   === End of Compilation 1 ===
+    1501-510  Compilation successful for file cublasf.f90.
+    mpifort -qsmp=omp -qoffload -qsuffix=cpp=f90 -DCUBLASXT -g rimp2_energy_whole_KERN.f90 -o rimp2-cublasxt -lcublas cublasf.o
+    ** rimp2_shared   === End of Compilation 1 ===
+    ** rimp2_input   === End of Compilation 2 ===
+    ** mp2correng   === End of Compilation 3 ===
+    ** rimp2_trape_dec   === End of Compilation 4 ===
+    ** rimp2_energy_whole   === End of Compilation 5 ===
+    ** rimp2_energyij   === End of Compilation 6 ===
+    ** initialization   === End of Compilation 7 ===
+    ** read_input_file   === End of Compilation 8 ===
+    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
+    rm -rf *.o *.mod
+    mpifort -qsmp=omp -qsuffix=cpp=f90 -DCPU -g  rimp2_energy_whole_KERN.f90 -o rimp2-essl -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
+    ** rimp2_shared   === End of Compilation 1 ===
+    ** rimp2_input   === End of Compilation 2 ===
+    ** mp2correng   === End of Compilation 3 ===
+    ** rimp2_trape_dec   === End of Compilation 4 ===
+    ** rimp2_energy_whole   === End of Compilation 5 ===
+    ** rimp2_energyij   === End of Compilation 6 ===
+    ** initialization   === End of Compilation 7 ===
+    ** read_input_file   === End of Compilation 8 ===
+    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
+    rm -rf *.o *.mod
+    mpifort -qsmp=omp -qsuffix=cpp=f90 -g rimp2_energy_whole_KERN.f90 -o rimp2-serial -L/sw/summit/essl/6.1.0-2/essl/6.1/lib64 -lessl
+    ** rimp2_shared   === End of Compilation 1 ===
+    ** rimp2_input   === End of Compilation 2 ===
+    ** mp2correng   === End of Compilation 3 ===
+    ** rimp2_trape_dec   === End of Compilation 4 ===
+    ** rimp2_energy_whole   === End of Compilation 5 ===
+    ** rimp2_energyij   === End of Compilation 6 ===
+    ** initialization   === End of Compilation 7 ===
+    ** read_input_file   === End of Compilation 8 ===
+    1501-510  Compilation successful for file rimp2_energy_whole_KERN.f90.
+    rm -rf *.o *.mod
+    Running this script with 1 node(s) with up to 6 GPUs:
+       NMPI is set to 2.
+       INPUT is set to benz.kern. For another INPUT, use INPUT=xxxx before this job script.
+       EXEC is set to rimp2-cublasxt rimp2-cublas rimp2-nvblas. For another EXEC, use EXEC='x y' before this job script.
+    
+    
+    [[[Running rimp2-cublasxt with 2 MPI rank(s)...]]]
+     You are running the code with cublasxt on GPU
+         Reading data from benz.kern                                                                       
+         NAUXBASD,NCOR,NACT,NVIR,NBF =    420     6    15    93   120
+         NQVV =        15
+         Memory Footprint:
+              B32(   39060,     15) =      4.6872 MB
+              eij(      15,     15) =      0.0018 MB
+              eab(      93,     93) =      0.0692 MB
+              QVV(   93,  15,   93) =      1.0379 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =     1
+                 Rel. error of computed MP2 corr. energy =  0.28444E-15
+                                   Wall time (minimum)   =    0.002 sec
+                                   Wall time (mean)      =    0.003 sec
+                                   Wall time (maximum)   =    0.004 sec
+              Passed :-) 
+    
+    
+    
+    
+    
+    [[[Running rimp2-cublas with 2 MPI rank(s)...]]]
+     You are running the code with cublas on GPU
+         Reading data from benz.kern                                                                       
+         NAUXBASD,NCOR,NACT,NVIR,NBF =    420     6    15    93   120
+         NQVV =        15
+         Memory Footprint:
+              B32(   39060,     15) =      4.6872 MB
+              eij(      15,     15) =      0.0018 MB
+              eab(      93,     93) =      0.0692 MB
+              QVV(   93,  15,   93) =      1.0379 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =     1
+                 Rel. error of computed MP2 corr. energy =  0.28444E-15
+                                   Wall time (minimum)   =    0.001 sec
+                                   Wall time (mean)      =    0.002 sec
+                                   Wall time (maximum)   =    0.002 sec
+              Passed :-) 
+    
+    
+    
+    
+    
+    [[[Running rimp2-nvblas with 2 MPI rank(s)...]]]
+    [NVBLAS] NVBLAS_CONFIG_FILE environment variable is NOT set : relying on default config filename 'nvblas.conf'
+    [NVBLAS] Cannot Log File 'nvblas.log'
+    [NVBLAS] Using devices :0 
+    [NVBLAS] Config parsed
+    [NVBLAS] NVBLAS_CONFIG_FILE environment variable is NOT set : relying on default config filename 'nvblas.conf'
+    [NVBLAS] Cannot Log File 'nvblas.log'
+    [NVBLAS] Using devices :0 
+    [NVBLAS] Config parsed
+     You are running the code with nvblas on GPU
+         Reading data from benz.kern                                                                       
+         NAUXBASD,NCOR,NACT,NVIR,NBF =    420     6    15    93   120
+         NQVV =        15
+         Memory Footprint:
+              B32(   39060,     15) =      4.6872 MB
+              eij(      15,     15) =      0.0018 MB
+              eab(      93,     93) =      0.0692 MB
+              QVV(   93,  15,   93) =      1.0379 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =     1
+                 Rel. error of computed MP2 corr. energy =  0.28444E-15
+                                   Wall time (minimum)   =    0.002 sec
+                                   Wall time (mean)      =    0.003 sec
+                                   Wall time (maximum)   =    0.004 sec
+              Passed :-) 
+    
+    
+    
+    Running this script with 1 node(s) with up to 42 CPU threads in total:
+       NMPI is set to 2.
+       NTHREAD is set to 21. For another NTHREAD, use NTHREAD=x before this job script.
+       INPUT is set to benz.kern. For another INPUT, use INPUT=xxxx before this job script.
+       EXEC is set to rimp2-essl rimp2-serial. For another EXEC, use EXEC='x y' before this job script.
+    
+    
+    [[[Running rimp2-essl with 2 MPI rank(s) and 21 threads/MPI ...]]]
+     You are running the code with CPU OpenMP
+         Reading data from benz.kern                                                                       
+         NAUXBASD,NCOR,NACT,NVIR,NBF =    420     6    15    93   120
+         NQVV =        15
+         Memory Footprint:
+              B32(   39060,     15) =      4.6872 MB
+              eij(      15,     15) =      0.0018 MB
+              eab(      93,     93) =      0.0692 MB
+              QVV(   93,  15,   93) =      1.0379 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =    21
+                 Rel. error of computed MP2 corr. energy =  0.00000E+00
+                                   Wall time (minimum)   =    0.004 sec
+                                   Wall time (mean)      =    0.005 sec
+                                   Wall time (maximum)   =    0.006 sec
+              Passed :-) 
+    
+    
+    
+    
+    
+    [[[Running rimp2-serial with 2 MPI rank(s) and 21 threads/MPI ...]]]
+     You are running the code serially
+         Reading data from benz.kern                                                                       
+         NAUXBASD,NCOR,NACT,NVIR,NBF =    420     6    15    93   120
+         NQVV =        15
+         Memory Footprint:
+              B32(   39060,     15) =      4.6872 MB
+              eij(      15,     15) =      0.0018 MB
+              eab(      93,     93) =      0.0692 MB
+              QVV(   93,  15,   93) =      1.0379 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =    21
+                 Rel. error of computed MP2 corr. energy =  0.00000E+00
+                                   Wall time (minimum)   =    0.021 sec
+                                   Wall time (mean)      =    0.023 sec
+                                   Wall time (maximum)   =    0.025 sec
+              Passed :-) 
+    
+    
+    
+    bash-4.2$ 
+
+ 
+### Runtime comparison of w30.kern and w30.rand
+Mini-app runtimes with real data sets (ending with .kern) include significant file I/O times, while runtimes with generated data sets (ending with .rand) have minimal I/O times. The following examples show similar wall times for computing the correlation energy, but the runtimes measured by `time` command are quite different. 
+
+| Input     | Total Runtime | FOM (Max wall time)  |
+| :-:       | :-:           | :-:                  |
+| w30.kern  |  63.727s      |   1.328s             |
+| w30.rand  |   5.069s      |   1.310s             |  
+
+#### w30.kern with NMPI=2 on SUMMIT
+    bash-4.2$ time NMPI=2 INPUT=w30.kern EXEC=rimp2-cublasxt ./run_gpu.sh
+    Running this script with 1 node(s) with up to 6 GPUs:
+       NMPI is set to 2.
+       INPUT is set to w30.kern.
+       EXEC is set to rimp2-cublasxt.
+    
+    
+    [[[Running rimp2-cublasxt with 2 MPI rank(s)...]]]
+     You are running the code with cublasxt on GPU
+         Reading data from w30.kern                                                                        
+         NAUXBASD,NCOR,NACT,NVIR,NBF =   2520    30   120   570   750
+         NQVV =       120
+         Memory Footprint:
+              B32( 1436400,    120) =   1378.9440 MB
+              eij(     120,    120) =      0.1152 MB
+              eab(     570,    570) =      2.5992 MB
+              QVV(  570, 120,  570) =    311.9040 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =     1
+                 Rel. error of computed MP2 corr. energy =  0.00000E+00
+                                   Wall time (minimum)   =    1.182 sec
+                                   Wall time (mean)      =    1.255 sec
+                                   Wall time (maximum)   =    1.328 sec
+              Passed :-) 
+    
+    
+    
+    
+    real    1m3.727s
+    user    0m1.104s
+    sys     0m0.250s
+
+#### w30.rand with NMPI=2 on SUMMIT
+    bash-4.2$ time NMPI=2 INPUT=w30.rand EXEC=rimp2-cublasxt ./run_gpu.sh
+    Running this script with 1 node(s) with up to 6 GPUs:
+       NMPI is set to 2.
+       INPUT is set to w30.rand.
+       EXEC is set to rimp2-cublasxt.
+    
+    
+    [[[Running rimp2-cublasxt with 2 MPI rank(s)...]]]
+     You are running the code with cublasxt on GPU
+         Generating arbitrary input data with the structure of w30.kern
+         NAUXBASD,NCOR,NACT,NVIR,NBF =   2520    30   120   570   750
+         NQVV =       120
+         Memory Footprint:
+              B32( 1436400,    120) =   1378.9440 MB
+              eij(     120,    120) =      0.1152 MB
+              eab(     570,    570) =      2.5992 MB
+              QVV(  570, 120,  570) =    311.9040 MB
+    
+         Results:
+                                   Number of MPI ranks   =     2
+                                   Number of OMP threads =     1
+                 Rel. error of computed MP2 corr. energy =  0.15987E-14
+                                   Wall time (minimum)   =    1.136 sec
+                                   Wall time (mean)      =    1.223 sec
+                                   Wall time (maximum)   =    1.310 sec
+              Passed :-) 
+    
+    
+    
+    
+    real    0m5.069s
+    user    0m1.128s
+    sys     0m0.225s
+
 
 
