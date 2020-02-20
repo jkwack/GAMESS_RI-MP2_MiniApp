@@ -456,13 +456,10 @@
   
         ! Generate B32
         ALLOCATE(B32(NAUXBASD*NVIR,NACT))
-        B32=0.0d0
-        do iact=1,NACT
-           B32(1,iact) = 1.0d1/NACT
-        enddo
+        B32=1.0d0/NAUXBASD
   
         ! Compute the corresponding mp2 corr energy
-        E2_ref=0.5d4/NACT/NACT
+        E2_ref=0.5d0*(NVIR**2)*(NACT**2)/(NAUXBASD**2)
 
       endif
 
