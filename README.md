@@ -24,10 +24,39 @@ with the Hartree-Fock energy and wave-function given as inputs.
 The inputs were generated from GAMESS. 
 
 ## Inputs for GAMESS RI-MP2 mini-app
+
+### Input data sets from GAMESS
+Input data sets for GAMESS RI-MP2 mini-app include several fundamental parameters 
+(e.g., the number of atomic orbital (N) and auxiliary (X) basis functions, 
+the number of correlated occupied (O) and virtual (V) molecular orbitals), 
+the molecular orbital coefficients, the molecular orbital energies, 
+and 3-index integral matrix B(X,V,O)), and the calculated MP2 correlation energy for validation. 
+The following input data sets were generated from GAMESS:
+* benz.kern for Benzene
+* cor.kern for Coronene
+* c60.kern for Fullerene
+* w30.kern for 30 water clusters
+* w60.kern for 60 water clusters
+
 In this git repository, there is only one input file, benz.kern.
 It is the smallest input. You can find bigger inputs at the following link:  
-[https://anl.box.com/v/GAMESS-RI-MP2-Inputs](https://anl.box.com/v/GAMESS-RI-MP2-Inputs)    
-On NVIDIA V100 GPUs, we recommend to use c60, w30, or w60 inputs to see meaningful speedups. 
+[https://anl.box.com/v/GAMESS-RI-MP2-Inputs](https://anl.box.com/v/GAMESS-RI-MP2-Inputs)  
+On NVIDIA V100 GPUs, we recommend to use c60.kern, w30.kern, or w60.kern inputs to see meaningful speedups. 
+
+| cor.kern  | c60.kern  | w60.kern  |
+| :-:       |:-:        | :-:       |
+|<img src="cor.png" height="240"/> |<img src="c60.png" height="300"/> | <img src="w60.png" height="300"/>  |
+
+
+
+### Arbitrary data sets with the same data structures as the above inputs
+The above data sets require significant I/O times before computing the correlation energy. They are not necessary in actual GAMESS workloads. In order to avoid the unnecessary I/O time, the following arbitrary data sets can be generated via the initialization process:
+* benz.rand: an arbitrary data with the same data structure of benz.kern
+* cor.rand: an arbitrary data with the same data structure of cor.kern
+* c60.rand: an arbitrary data with the same data structure of c60.kern
+* w30.rand: an arbitrary data with the same data structure of w30.kern
+* w60.rand: an arbitrary data with the same data structure of w60.kern
+
 
 ## Running GAMESS RI-MP2 mini-app
 
