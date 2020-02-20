@@ -18,20 +18,25 @@
 #endif
 #endif
 
-      end !*************************************************************
+      end module
+
+      module rimp2_input
+        double precision,allocatable,dimension(:,:) :: eij,eab,B32
+        double precision,allocatable,dimension(:) :: EIG
+        integer:: NAUXBASD,NCOR,NACT,NVIR,NBF,NQVV
+        double precision:: E2_ref
+      end module
+
+
 
 
       program mp2CorrEng
       use rimp2_shared
+      use rimp2_input
       implicit double precision(a-h,o-z)
 
       ! energy var
       double precision:: E2, E2_mpi
-
-      ! var dec
-      character(80) :: filename,tmp
-      double precision,allocatable,dimension(:) :: EIG
-      double precision,allocatable,dimension(:,:) :: eij,eab,B32
 
       ! timing
       double precision:: dt_mpi, dt_min, dt_max, dt_mean
@@ -73,90 +78,20 @@
         cublas_return = cublasXtSetBlockDim(cublas_handle, 2048)
 #endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!! read input for gpu kernel !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      ! input file name
-      call get_command_argument(1,filename)
-
-      ! open input file
-      open(unit=500, file=filename,status='old',form="unformatted", &
-#if defined(INTEL)
-             access='direct',recl=10,iostat=ierr,action='read')
-#else
-             access='direct',recl=40,iostat=ierr,action='read')
-#endif
-
-      ! read parameters
-      read(500,iostat=ierr,rec=1) NAUXBASD
-      read(500,iostat=ierr,rec=2) NCOR
-      read(500,iostat=ierr,rec=3) NACT
-      read(500,iostat=ierr,rec=4) NVIR
-      read(500,iostat=ierr,rec=5) NBF
-
-      ! write MO energy
-      ALLOCATE(EIG(NBF))
-      do ii=1,NBF
-        irec=ii+5
-        read(500,iostat=ierr,rec=irec) EIG(ii)
-      enddo
-
-      ! read B32
-      ALLOCATE(B32(NAUXBASD*NVIR,NACT))
-      jrec=irec
-      do iact=1,NACT
-        do ixvrt=1,NAUXBASD*NVIR
-          jrec=jrec+1
-          read(500,iostat=ierr,rec=jrec) B32(ixvrt,iact)
-        enddo
-      enddo
-      ! read mp2 corr energy
-      read(500,iostat=ierr,rec=jrec+1) E2_ref
+      ! Read or generate input data
+      call Initialization(MASWRK)
 
 !!!!!!!!!!! finish reading input for gpu kernel !!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      IF (command_argument_count().gt.1) then
-        call get_command_argument(2,tmp)
-        read(tmp,*) NQVV
-      ELSE
-        NQVV=NACT
-      ENDIF
 
-      if(MASWRK) THEN
-        write(*,'(5x,A,I10)') 'NQVV =',NQVV
-        write(*,'(5x,A)') 'Memory Footprint:'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'B32(',NAUXBASD*NVIR,',',NACT,') = ',NAUXBASD*NVIR*NACT*8.D-6,' MB'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eij(',NACT,',',NACT,') = ',NACT*NACT*8.D-6,' MB'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eab(',NVIR,',',NVIR,') = ',NVIR*NVIR*8.D-6,' MB'
-        write(*,'(10x,A4,I4,A,I3,A,I4,A,F11.4,A)') 'QVV(',NVIR,',',NACT,',',NVIR,') = ',NVIR*NACT*NVIR*8.D-6,' MB'
-      endif
-
-      ! some parameters
-      NOCC=NCOR+NACT
 
       ! eliminate extra ranks when NPROC > NACT
       IF(ME.GT.NACT-1) then
         write(*,*) "rank skipped wwww", ME
         GOTO 120
       endif
-
-      ! virt-virt MO energy pairs
-      ALLOCATE(eab(NVIR,NVIR))
-      DO IB=1,NVIR
-        DO IA=1,IB
-          eab(IA,IB) = EIG(IA+NOCC) + EIG(IB+NOCC)
-          eab(IB,IA) = eab(IA,IB)
-        ENDDO
-      ENDDO
-
-      ! occ-occ MO energy pairs
-      ALLOCATE(eij(NACT,NACT))
-      DO JJ=1,NACT
-        DO II=1,JJ
-          eij(II,JJ)=EIG(II+NCOR) + EIG(JJ+NCOR)
-        ENDDO
-      ENDDO
 
       ! trapezoidal decomposition occ-occ pairs
       CALL RIMP2_TRAPE_DEC(LddiActStart,LddiActEnd,NACT)
@@ -422,3 +357,185 @@
 
 
 
+      SUBROUTINE Initialization(MASWRK)
+      use rimp2_input
+      implicit double precision(a-h,o-z)
+
+      logical, intent(in):: MASWRK
+
+      ! var dec
+      character(80) :: filename,tmp
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! Generate an arbitrary input that has the same structure of GAMESS data !!!
+
+      ! input file name
+      call get_command_argument(1,filename)
+
+      if (filename.eq.'benz.kern'.or.filename.eq.'cor.kern'        &
+      .or.filename.eq.'c60.kern' .or.filename.eq.'w30.kern'        &
+      .or.filename.eq.'w60.kern' ) then
+        if (MASWRK) then
+          write(*,'(5x,A,A)') 'Reading data from ',filename
+        endif
+        call Read_Input_File(filename)
+      else
+        if (filename.eq.'benz.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of benz.kern'
+          endif
+          NAUXBASD=420
+          NCOR=6
+          NACT=15
+          NVIR=93
+          NBF=120
+        else if (filename.eq.'cor.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of cor.kern'
+          endif
+          NAUXBASD=1512
+          NCOR=24
+          NACT=54
+          NVIR=282
+          NBF=384
+        else if (filename.eq.'c60.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of c60.kern'
+          endif
+          NAUXBASD=3960
+          NCOR=60
+          NACT=120
+          NVIR=360
+          NBF=540
+        else if (filename.eq.'w30.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of w30.kern'
+          endif
+          NAUXBASD=2520
+          NCOR=30
+          NACT=120
+          NVIR=570
+          NBF=750
+        else if (filename.eq.'w60.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of w60.kern'
+          endif
+          NAUXBASD=5040
+          NCOR=60
+          NACT=240
+          NVIR=1140
+          NBF=1500
+        else
+          if (MASWRK) then
+            write(*,'(5x,A,/,5x,A)') 'Error!','One of the followings should be used as an input:'
+            write(*,'(10x,A)') 'benz.kern, cor.kern, c60.kern, w30.kern, or w60.kern for actual data sets, or'
+            write(*,'(10x,A)') 'benz.rand, cor.rand, c60.rand, w30.rand, or w60.rand for arbitrary data sets.'
+          endif
+           stop
+        endif
+    
+        ! Generate MO energy
+        ALLOCATE(EIG(NBF))
+        EIG=1.0d0
+        do ii=1,NACT
+           EIG(ii+NCOR) = 2.0d0
+        enddo
+  
+        ! Generate B32
+        ALLOCATE(B32(NAUXBASD*NVIR,NACT))
+        B32=0.0d0
+        do iact=1,NACT
+           B32(1,iact) = 1.0d1/NACT
+        enddo
+  
+        ! Compute the corresponding mp2 corr energy
+        E2_ref=0.5d4/NACT/NACT
+
+      endif
+
+!!!!!!!!!!!!!!!!!!!!!!!! Finish the input generation !!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! some parameters
+      NOCC=NCOR+NACT
+
+      ! virt-virt MO energy pairs
+      ALLOCATE(eab(NVIR,NVIR))
+      DO IB=1,NVIR
+         DO IA=1,IB
+            eab(IA,IB) = EIG(IA+NOCC) + EIG(IB+NOCC)
+            eab(IB,IA) = eab(IA,IB)
+         ENDDO
+      ENDDO
+
+      ! occ-occ MO energy pairs
+      ALLOCATE(eij(NACT,NACT))
+      DO JJ=1,NACT
+         DO II=1,JJ
+            eij(II,JJ)=EIG(II+NCOR) + EIG(JJ+NCOR)
+         ENDDO
+      ENDDO
+
+      IF (command_argument_count().gt.1) then
+        call get_command_argument(2,tmp)
+        read(tmp,*) NQVV
+      ELSE
+        NQVV=NACT
+      ENDIF
+
+      if(MASWRK) THEN
+        write(*,'(5x,A,5I5)') 'NAUXBASD,NCOR,NACT,NVIR,NBF = ',NAUXBASD,NCOR,NACT,NVIR,NBF
+        write(*,'(5x,A,I10)') 'NQVV =',NQVV
+        write(*,'(5x,A)') 'Memory Footprint:'
+        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'B32(',NAUXBASD*NVIR,',',NACT,') = ',NAUXBASD*NVIR*NACT*8.D-6,' MB'
+        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eij(',NACT,',',NACT,') = ',NACT*NACT*8.D-6,' MB'
+        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eab(',NVIR,',',NVIR,') = ',NVIR*NVIR*8.D-6,' MB'
+        write(*,'(10x,A4,I4,A,I3,A,I4,A,F11.4,A)') 'QVV(',NVIR,',',NACT,',',NVIR,') = ',NVIR*NACT*NVIR*8.D-6,' MB'
+      endif
+
+      END
+
+
+
+
+      SUBROUTINE Read_Input_File(filename)
+      use rimp2_input
+      implicit double precision(a-h,o-z)
+
+      character(80), intent(in) :: filename
+     
+      ! open input file
+      open(unit=500, file=filename,status='old',form="unformatted", &
+#if defined(INTEL)
+             access='direct',recl=10,iostat=ierr,action='read')
+#else
+             access='direct',recl=40,iostat=ierr,action='read')
+#endif
+
+      ! read parameters
+      read(500,iostat=ierr,rec=1) NAUXBASD
+      read(500,iostat=ierr,rec=2) NCOR
+      read(500,iostat=ierr,rec=3) NACT
+      read(500,iostat=ierr,rec=4) NVIR
+      read(500,iostat=ierr,rec=5) NBF
+
+      ! write MO energy
+      ALLOCATE(EIG(NBF))
+      do ii=1,NBF
+        irec=ii+5
+        read(500,iostat=ierr,rec=irec) EIG(ii)
+      enddo
+
+      ! read B32
+      ALLOCATE(B32(NAUXBASD*NVIR,NACT))
+      jrec=irec
+      do iact=1,NACT
+        do ixvrt=1,NAUXBASD*NVIR
+          jrec=jrec+1
+          read(500,iostat=ierr,rec=jrec) B32(ixvrt,iact)
+        enddo
+      enddo
+      ! read mp2 corr energy
+      read(500,iostat=ierr,rec=jrec+1) E2_ref
+
+      END
