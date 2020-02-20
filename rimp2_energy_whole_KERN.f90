@@ -365,6 +365,7 @@
 
       ! var dec
       character(80) :: filename,tmp
+      integer :: nwater,ierr
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! Generate an arbitrary input that has the same structure of GAMESS data !!!
@@ -426,12 +427,24 @@
           NVIR=1140
           NBF=1500
         else
-          if (MASWRK) then
-            write(*,'(5x,A,/,5x,A)') 'Error!','One of the followings should be used as an input:'
-            write(*,'(10x,A)') 'benz.kern, cor.kern, c60.kern, w30.kern, or w60.kern for actual data sets, or'
-            write(*,'(10x,A)') 'benz.rand, cor.rand, c60.rand, w30.rand, or w60.rand for arbitrary data sets.'
+          read(filename,*,iostat=ierr) nwater
+          if ( (ierr.eq.0) .and. (nwater .gt. 0) ) then
+            if (MASWRK) then
+              write(*,'(5x,A,I3,A)') 'Generating arbitrary input data with the structure of',nwater,' water clusters'
+            endif
+            NAUXBASD=84*nwater
+            NCOR=nwater
+            NACT=4*nwater
+            NVIR=19*nwater
+            NBF=25*nwater
+          else
+            if (MASWRK) then
+              write(*,'(5x,A,/,5x,A)') 'Error!','One of the followings should be used as an input:'
+              write(*,'(10x,A)') 'benz.kern, cor.kern, c60.kern, w30.kern, or w60.kern for actual data sets, or'
+              write(*,'(10x,A)') 'benz.rand, cor.rand, c60.rand, w30.rand, or w60.rand for arbitrary data sets.'
+            endif
+            stop
           endif
-           stop
         endif
     
         ! Generate MO energy
@@ -484,13 +497,13 @@
       ENDIF
 
       if(MASWRK) THEN
-        write(*,'(5x,A,5I5)') 'NAUXBASD,NCOR,NACT,NVIR,NBF = ',NAUXBASD,NCOR,NACT,NVIR,NBF
+        write(*,'(5x,A,5I6)') 'NAUXBASD,NCOR,NACT,NVIR,NBF = ',NAUXBASD,NCOR,NACT,NVIR,NBF
         write(*,'(5x,A,I10)') 'NQVV =',NQVV
         write(*,'(5x,A)') 'Memory Footprint:'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'B32(',NAUXBASD*NVIR,',',NACT,') = ',NAUXBASD*NVIR*NACT*8.D-6,' MB'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eij(',NACT,',',NACT,') = ',NACT*NACT*8.D-6,' MB'
-        write(*,'(10x,A4,I7,A,I5,A,F11.4,A)') 'eab(',NVIR,',',NVIR,') = ',NVIR*NVIR*8.D-6,' MB'
-        write(*,'(10x,A4,I4,A,I3,A,I4,A,F11.4,A)') 'QVV(',NVIR,',',NACT,',',NVIR,') = ',NVIR*NACT*NVIR*8.D-6,' MB'
+        write(*,'(10x,A4,I8,A,I7,A,F11.4,A)') 'B32(',NAUXBASD*NVIR,',',NACT,') = ',NAUXBASD*NVIR*NACT*8.D-6,' MB'
+        write(*,'(10x,A4,I8,A,I7,A,F11.4,A)') 'eij(',NACT,',',NACT,') = ',NACT*NACT*8.D-6,' MB'
+        write(*,'(10x,A4,I8,A,I7,A,F11.4,A)') 'eab(',NVIR,',',NVIR,') = ',NVIR*NVIR*8.D-6,' MB'
+        write(*,'(10x,A4,I5,A,I4,A,I5,A,F11.4,A)') 'QVV(',NVIR,',',NACT,',',NVIR,') = ',NVIR*NACT*NVIR*8.D-6,' MB'
       endif
 
       END
