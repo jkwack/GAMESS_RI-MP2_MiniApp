@@ -2,7 +2,7 @@
 source /soft/compilers/intel-2019/compilers_and_libraries_2019.4.243/linux/bin/compilervars.sh intel64
 source /soft/compilers/intel-2019/compilers_and_libraries_2019.4.243/linux/mpi/intel64/bin/mpivars.sh
 rm -f Makefile run_cpu.sh
-ln -s Makefile_JLSE_Intel Makefile
-ln -s run_cpu_JLSE_Intel.sh run_cpu.sh
+ln -s ./build_and_run/Makefile_JLSE_Intel Makefile
+ln -s ./build_and_run/run_cpu_JLSE_Intel.sh run_cpu.sh
 
 

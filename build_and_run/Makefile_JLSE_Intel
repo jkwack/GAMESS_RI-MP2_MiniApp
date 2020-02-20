@@ -1,6 +1,7 @@
 FC=mpiifort
 
-SRC=rimp2_energy_whole_KERN.f90
+SDIR=./source/
+SRC=${SDIR}/rimp2_energy_whole_KERN.f90
 
 EXE_MKL=rimp2-mkl
 FFLAGS_MKL=-Ofast -qopenmp -cpp -DINTEL -DCPU -g 

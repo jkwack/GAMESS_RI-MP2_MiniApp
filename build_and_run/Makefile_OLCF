@@ -1,7 +1,8 @@
 FC=mpifort
 
-SRC=rimp2_energy_whole_KERN.f90
-SRC_CUBLASF=cublasf.f90
+SDIR=./source/
+SRC=${SDIR}/rimp2_energy_whole_KERN.f90
+SRC_CUBLASF=${SDIR}/cublasf.f90
 
 EXE_NVBLAS=rimp2-nvblas
 FFLAGS_NVBLAS=-qsmp=omp -qoffload -qsuffix=cpp=f90 -DNVBLAS -g

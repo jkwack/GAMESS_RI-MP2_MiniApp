@@ -45,7 +45,7 @@ On NVIDIA V100 GPUs, we recommend to use c60.kern, w30.kern, or w60.kern inputs 
 
 | cor.kern  | c60.kern  | w60.kern  |
 | :-:       |:-:        | :-:       |
-|<img src="cor.png" height="240"/> |<img src="c60.png" height="240"/> | <img src="w60.png" height="240"/>  |
+|<img src="./docs/cor.png" height="240"/> |<img src="./docs/c60.png" height="240"/> | <img src="./docs/w60.png" height="240"/>  |
 
 
 
@@ -219,7 +219,7 @@ The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app rep
 </table>
 
 
-<img src="SpeedUp_w30_w60.png" height="350"/>   <img src="SpeedUp_cuBLASXT_ESSL.png" height="350"/>
+<img src="./docs/SpeedUp_w30_w60.png" height="350"/>   <img src="./docs/SpeedUp_cuBLASXT_ESSL.png" height="350"/>
 
 
 ## Examples of runs
