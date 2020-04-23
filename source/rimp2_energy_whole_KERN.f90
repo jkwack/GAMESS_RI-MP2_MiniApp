@@ -162,6 +162,10 @@
         endif
       endif
 
+      ! deallocate arrays
+      call finalization
+
+
 #if !defined(NOMPI)
         call MPI_FINALIZE(ierr)
 #endif
@@ -505,8 +509,15 @@
 
       END
 
-
-
+      SUBROUTINE Finalization(MASWRK)
+        use rimp2_input
+        implicit double precision(a-h,o-z)
+        integer status
+        deallocate( B32, stat=status)
+        deallocate( EIG, stat=status)
+        deallocate( eij, stat=status)
+        deallocate( eab, stat=status)
+      end SUBROUTINE Finalization
 
       SUBROUTINE Read_Input_File(filename)
       use rimp2_input
