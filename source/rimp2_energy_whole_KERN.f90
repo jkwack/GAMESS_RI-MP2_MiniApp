@@ -509,7 +509,7 @@
 
       END
 
-      SUBROUTINE Finalization(MASWRK)
+      SUBROUTINE Finalization
         use rimp2_input
         implicit double precision(a-h,o-z)
         integer status
