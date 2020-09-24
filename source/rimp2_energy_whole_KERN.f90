@@ -1,6 +1,9 @@
 !  Copyright (C) 2020, Argonne National Laboratory. All Rights Reserved.
 !  Licensed under the NCSA open source license
 
+#if defined(INTEL_OFFLOAD)
+  include "mkl_omp_offload.f90"
+#endif
       module rimp2_shared
       use omp_lib
 #if defined(CUBLAS) || defined(CUBLASXT)
@@ -60,6 +63,8 @@
         write(*,*) 'You are running the code with CPU OpenMP'
 #elif defined(NVBLAS)
         write(*,*) 'You are running the code with nvblas on GPU'
+#elif defined(INTEL_OFFLOAD)
+        write(*,*) 'You are running the code with mkl on GPU'
 #elif defined(CUBLAS)
         write(*,*) 'You are running the code with cublas on GPU'
 #elif defined(CUBLASXT)
@@ -99,9 +104,13 @@
       ! Warming up
       E2_mpi=0.0D0
       ! corr energy accumulation
+#if defined(COMBINED_VERSION)
+      CALL RIMP2_ENERGY_WHOLE_COMBINED(E2_mpi,         &
+           LddiActStart,LddiActEnd)
+#else
       CALL RIMP2_ENERGY_WHOLE(E2_mpi,B32,eij,eab,         &
            LddiActStart,LddiActEnd,NAUXBASD,NACT,NVIR,NQVV)
-
+#endif
       ! Actual computation
       ! init E2_mpi
       E2_mpi=0.0D00
@@ -110,8 +119,13 @@
       st=omp_get_wtime()
 
       ! corr energy accumulation
-      CALL RIMP2_ENERGY_WHOLE(E2_mpi,B32, eij,eab,        &
+#if defined(COMBINED_VERSION)
+      CALL RIMP2_ENERGY_WHOLE_COMBINED(E2_mpi,         &
+           LddiActStart,LddiActEnd)
+#else
+      CALL RIMP2_ENERGY_WHOLE(E2_mpi,B32,eij,eab,         &
            LddiActStart,LddiActEnd,NAUXBASD,NACT,NVIR,NQVV)
+#endif
 
       ! toc
       et=omp_get_wtime()
@@ -197,6 +211,160 @@
 
       END !*************************************************************
 
+
+
+
+      SUBROUTINE RIMP2_ENERGY_WHOLE_COMBINED(E2,             &
+                 LddiActStart,LddiActEnd)
+
+      use rimp2_shared
+      use rimp2_input
+#if defined(INTEL_OFFLOAD)
+      use onemkl_blas_omp_offload
+#endif
+      implicit double precision(a-h,o-z)
+
+      ! output
+      double precision :: E2
+
+      ! local data
+      double precision,save :: E2_omp
+      double precision,allocatable,dimension(:,:,:),save :: QVV
+#ifdef CPU
+        !$omp threadprivate(E2_omp,QVV)
+#endif
+
+      ! turn off dynamics threadss
+      CALL OMP_SET_DYNAMIC(.FALSE.)
+
+#ifdef CPU
+        ! env num threads
+        Nthreads=omp_get_max_threads()
+
+        !$OMP PARALLEL NUM_THREADS(Nthreads)                              &
+        !$omp default(none)                                               &
+        !$omp shared(LddiActStart,LddiActEnd,                             &   
+        !$omp        NACT,NVIR,NAUXBASD,B32,eij,eab,E2,NQVV)              &
+        !$omp private(IACT,JACT,iQVV,IACTmod,num,num2,fac,ib_n,ic_n,ia_n2,ic_n2,tijab,q_t)
+#endif
+
+      E2_omp = 0.0D00
+      ALLOCATE(QVV(NVIR,NQVV,NVIR))
+
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+        !$omp target enter data map(alloc: QVV) 
+        !$omp target enter data map(to: eij,eab,B32) 
+#endif
+
+#ifdef CPU
+        !$omp do schedule(DYNAMIC)
+#endif
+      DO JACT=LddiActStart,LddiActEnd
+        DO IACTmod=1,(JACT-1)/NQVV+1
+          IACT = (IACTmod-1)*NQVV+1
+          IF(IACTmod*NQVV>JACT) THEN
+            iQVV = JACT-(IACTmod-1)*NQVV
+          ELSE
+            iQVV = NQVV
+          ENDIF
+
+
+
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+        !$omp target data use_device_ptr(BI,BJ,QVV)
+#endif
+#if defined(CUBLAS) || defined(CUBLASXT)
+#if defined(CUBLAS)
+          cublas_return =  CUBLASDGEMM_v2 &
+#elif defined(CUBLASXT)
+          cublas_return =  cublasXtDgemm  &
+#endif
+                   (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
+                     NVIR*iQVV,NVIR,NAUXBASD,                           &
+                     1.0D00, B32(1,IACT),NAUXBASD,                                  &
+                     B32(1,JACT),NAUXBASD,                                  &
+                  0.0D00, QVV,NVIR*iQVV)
+        cublas_return = cudaDeviceSynchronize()
+
+#elif defined(NVBLAS) || defined(CPU)
+        CALL DGEMM &
+           ('T','N',  &
+                     NVIR*iQVV,NVIR,NAUXBASD,                           &
+                  1.0D00, B32(1,IACT),NAUXBASD,                                  &
+                          B32(1,JACT),NAUXBASD,                                  &
+                  0.0D00, QVV,NVIR*iQVV)
+#elif defined(INTEL_OFFLOAD)
+         !$omp target variant dispatch use_device_ptr(B32,QVV)
+
+        CALL DGEMM &
+           ('T','N',  &
+                     NVIR*iQVV,NVIR,NAUXBASD,                           &
+                  1.0D00, B32(1,IACT),NAUXBASD,                                  &
+                          B32(1,JACT),NAUXBASD,                                  &
+                  0.0D00, QVV,NVIR*iQVV)
+
+
+        !$omp end target variant dispatch
+
+#else
+        print *, "incorrect macro choices"
+        stop 1
+#endif
+
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+        !$omp end target data
+#endif
+
+
+
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+!$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp)
+#endif
+        DO IB=1,NVIR
+           DO IA=1,NVIR
+              DO IC=1,iQVV
+                 num = IC+(IB-1)*iQVV 
+                 IB_n = (num -1)/ NQVV + 1
+                 IC_n = mod(num-1, NQVV) + 1
+                 num2 = IC+(IA-1)*iQVV 
+                 IA_n2 = (num2 - 1) / NQVV + 1
+                 IC_n2 = mod(num2-1, NQVV) + 1
+
+                 Tijab=QVV(IA,IC_n,IB_n)/(eij(IACT+IC-1,JACT)-eab(IA,IB))
+                 Q_t=QVV(IA,IC_n,IB_n)+QVV(IA,IC_n,IB_n)
+                 FAC=2.0D00
+                 IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
+                 E2_omp = E2_omp + FAC*Tijab*(Q_t-QVV(IB,IC_n2,IA_n2))
+
+              ENDDO
+           ENDDO
+        ENDDO
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+!$omp end target teams distribute parallel do
+#endif
+        ENDDO
+      ENDDO
+#ifdef CPU
+        !$omp end do
+#endif
+
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+        !$omp target exit data map(release: QVV,eij,eab,B32) 
+#endif
+
+#ifdef CPU
+        !$omp atomic
+#endif
+      E2 = E2 + E2_omp
+
+      DEALLOCATE(QVV)
+
+
+#ifdef CPU
+        !$OMP END PARALLEL
+#endif
+
+      END !*************************************************************
 
 
       SUBROUTINE RIMP2_ENERGY_WHOLE(E2,B32,eij,eab,             &
