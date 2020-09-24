@@ -281,8 +281,8 @@
 #endif
                    (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
-                  1.0D00, BI,NAUXBASD,                                  &
-                          BJ,NAUXBASD,                                  &
+                     1.0D00, B32(1,IACT),NAUXBASD,                                  &
+                     B32(1,JACT),NAUXBASD,                                  &
                   0.0D00, QVV,NVIR*iQVV)
         cublas_return = cudaDeviceSynchronize()
 
