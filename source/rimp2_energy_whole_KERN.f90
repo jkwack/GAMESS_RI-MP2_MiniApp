@@ -271,7 +271,7 @@
 
 
 #if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
-        !$omp target data use_device_ptr(BI,BJ,QVV)
+        !$omp target data use_device_ptr(B32,QVV)
 #endif
 #if defined(CUBLAS) || defined(CUBLASXT)
 #if defined(CUBLAS)
