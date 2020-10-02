@@ -1,0 +1,6 @@
+#!/bin/bash
+module use /soft/restricted/intel_dga/modulefiles
+module load oneapi
+
+
+
