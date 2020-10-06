@@ -18,6 +18,7 @@ struct rimp2_input {
 
 void Initialization(int argc, char *argv[]);
 void Finalization();
+void Read_Input_File(std::string fname);
 
 
 int main(int argc, char *argv[]){
@@ -53,6 +54,7 @@ void Initialization(int argc, char *argv[]){
     if (argc > 1) fname=argv[1];
     if (fname=="benz.kern" || fname=="cor.kern" || fname=="c60.kern" || fname=="w30.kern" || fname=="w60.kern") {
         std::cout<<"\tReading data from "<<fname<<std::endl;
+        Read_Input_File(fname);
         std::cout<<"Read_Input_File needs to be implemented\n";
 
         my.B32size=my.NAUXBASD*my.NVIR*my.NACT;
@@ -165,3 +167,37 @@ void Finalization(){
     delete[] my.eab;
 }
 
+
+void Read_Input_File(std::string fname){
+    std::ifstream myfile;
+    int a,b,c;
+    char n;
+    std::string line;
+    std::streampos here;
+
+    std::cout<<"In Read_Input_File\n";
+    myfile.open(fname,std::ios::in | std::ios::binary);
+
+    if (myfile.is_open()){
+        for (int i=0;i<10;i++){
+        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
+        myfile.read((char*)&a, sizeof(a));          my.NAUXBASD=a;
+    }
+        // myfile.read((char*)&n, 8);
+        std::cout<<a<<"\n";
+        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
+        myfile.read((char*)&b, sizeof(b));          my.NCOR=b;
+        std::cout<<b<<"\n";
+        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
+        myfile.read((char*)&c, sizeof(c));          my.NACT=c;
+        std::cout<<c<<"\n";
+        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
+        // myfile.read((char*)&a, sizeof(a));          my.NVIR=a;
+        // myfile.read((char*)&a, sizeof(a));          my.NBF=a;
+    }
+
+
+    myfile.close();
+
+
+}
