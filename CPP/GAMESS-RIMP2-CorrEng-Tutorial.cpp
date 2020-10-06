@@ -18,7 +18,7 @@ struct rimp2_input {
     double E2_ref;
 } my;
 
-void RIMP2_Energy_Whole_Combined(double E2);
+void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]){
     // Measuing the performance of Correlation Energy Accumulation
     E2 = 0.0;
     tic = std::clock();
-    RIMP2_Energy_Whole_Combined(E2);
+    RIMP2_Energy_Whole_Combined(&E2);
     toc = std::clock();
     dt = (toc-tic)/(double)CLOCKS_PER_SEC;
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
     E2_diff = E2 - my.E2_ref;
     Rel_E2_error = abs(E2_diff/my.E2_ref);
     std::cout<<"\tResults:\n";
-    std::cout<<"\t\tReference MP2 corr. energy              = "<<my.E2_ref<<"\n";
+//    std::cout<<"\t\tReference MP2 corr. energy              = "<<my.E2_ref<<"\n";
     std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
     std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
     if (Rel_E2_error <= 1.0E-6) {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]){
 
 
 
-void RIMP2_Energy_Whole_Combined(double E2){
+void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
     int nQVV=my.NVIR*my.NQVV*my.NVIR;
@@ -127,10 +127,10 @@ void RIMP2_Energy_Whole_Combined(double E2){
                     }
                 }
                 double FAC=2.0E0;
-                if(IACT+IC-1 == JACT) FAC=1.0E0;
-                E2 = E2 + FAC*E2_t;
+                if(IACT+IC == JACT) FAC=1.0E0;
+                *E2 = *E2 + FAC*E2_t;
             }
-            std::cout<<IACTmod<<" "<<JACT<<" "<<E2<<"\n";
+            //std::cout<<IACTmod<<" "<<JACT<<" "<<*E2<<"\n";
 
 
         }
@@ -238,7 +238,7 @@ void Initialization(int argc, char *argv[]){
     // Read the second command line argument for NQVV
     if (argc > 2) {my.NQVV=std::atoi(argv[2]);}
     else {my.NQVV=my.NACT;}
-    std::cout<<"NQVV="<<my.NQVV<<std::endl;
+//    std::cout<<"NQVV="<<my.NQVV<<std::endl;
 
     // Print out the summary of the input
     std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<my.NAUXBASD<<" "<<my.NCOR<<" "<<my.NACT<<" "<<my.NVIR<<" "<<my.NBF<<"\n";
