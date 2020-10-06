@@ -62,6 +62,7 @@ int main(int argc, char *argv[]){
     E2_diff = E2 - my.E2_ref;
     Rel_E2_error = abs(E2_diff/my.E2_ref);
     std::cout<<"\tResults:\n";
+    std::cout<<"\t\tReference MP2 corr. energy              = "<<my.E2_ref<<"\n";
     std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
     std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
     if (Rel_E2_error <= 1.0E-6) {
@@ -81,7 +82,6 @@ int main(int argc, char *argv[]){
 
 void RIMP2_Energy_Whole_Combined(double E2){
 
-    double E2_local;
     double *QVV;
     int nQVV=my.NVIR*my.NQVV*my.NVIR;
     int iQVV;
@@ -126,7 +126,11 @@ void RIMP2_Energy_Whole_Combined(double E2){
                         E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*my.NVIR+ IA*my.NVIR*iQVV]);
                     }
                 }
+                double FAC=2.0E0;
+                if(IACT+IC-1 == JACT) FAC=1.0E0;
+                E2 = E2 + FAC*E2_t;
             }
+            std::cout<<IACTmod<<" "<<JACT<<" "<<E2<<"\n";
 
 
         }
