@@ -1,4 +1,4 @@
-CPP=g++
+CPP=icpc
 
 SDIR=./
 SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
@@ -16,7 +16,7 @@ EXES=$(EXE_MKL) $(EXE_MKL_OFFLOAD)
 all: $(EXES)
 
 $(EXE_MKL): $(SRC)
-	$(CPP) $(FFLAGS_MKL) $^ -o $@ $(LDFLAGS_MKL)
+	$(CPP) -mkl $(FFLAGS_MKL) $^ -o $@ $(LDFLAGS_MKL)
 	rm -rf *.o *.mod
 
 $(EXE_MKL_OFFLOAD): $(SRC)

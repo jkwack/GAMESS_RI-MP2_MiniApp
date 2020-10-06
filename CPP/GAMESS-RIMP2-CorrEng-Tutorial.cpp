@@ -7,6 +7,7 @@
 #include <new>
 #include <fstream>
 #include <ctime>
+#include "mkl.h"
 
 struct rimp2_input {
     double *eij, *eab, *B32;           // They were 2D arrays in Fortran
@@ -47,7 +48,7 @@ int main(int argc, char *argv[]){
     // Warming up
     E2 = 0.0;
     // Correlation Energy Accumulation
-    RIMP2_Energy_Whole_Combined(E2);
+//    RIMP2_Energy_Whole_Combined(E2);
 
     // Measuing the performance of Correlation Energy Accumulation
     E2 = 0.0;
