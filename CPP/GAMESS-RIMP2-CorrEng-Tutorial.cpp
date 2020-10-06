@@ -80,6 +80,60 @@ int main(int argc, char *argv[]){
 
 void RIMP2_Energy_Whole_Combined(double E2){
 
+    double E2_local;
+    double *QVV;
+    int nQVV=my.NVIR*my.NQVV*my.NVIR;
+    int iQVV;
+
+    QVV = new double[nQVV];
+
+    for(int JACT=0;JACT<my.NACT;JACT++){
+        for(int IACTmod=0;IACTmod<=JACT/my.NQVV;IACTmod++){
+
+            // Set a length of blocks in a raw according my.NQVV
+            int IACT = IACTmod*my.NQVV;
+            if((IACTmod+1)*my.NQVV>JACT+1) { iQVV = JACT - (IACTmod)*my.NQVV + 1; }
+            else { iQVV = my.NQVV; }
+
+            // Compute QVV using dgemm
+            int m=my.NVIR*iQVV;
+            int n=my.NVIR;
+            int k=my.NAUXBASD;
+            double alpha = 1.0E0;
+            double beta = 0.0E0;
+            int lda=my.NAUXBASD;
+            int ldb=my.NAUXBASD;
+            int ldc=my.NVIR*iQVV;
+            dgemm("T", "N",
+                &m,     &n,     &k,
+                &alpha, &my.B32[IACT*my.NAUXBASD*my.NVIR], &lda,
+                        &my.B32[JACT*my.NAUXBASD*my.NVIR], &ldb,
+                &beta,  QVV,    &ldc);
+
+            // Accumulate E2
+            for(int IC=0; IC<iQVV; IC++){
+                double E2_t=0.0;
+                for(int IB=0; IB<my.NVIR; IB++){
+                    for(int IA=0; IA<my.NVIR; IA++){
+                        double Tijab = 
+                            QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV]
+                            / ( my.eij[IACT+IC + JACT*my.NACT]
+                                - my.eab[IA + IB*my.NVIR] );
+                        double Q_t = 
+                            QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV]
+                            + QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV];
+                        E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*my.NVIR+ IA*my.NVIR*iQVV]);
+                    }
+                }
+            }
+
+
+        }
+    }
+
+
+
+    delete[] QVV;
 }
 
 
