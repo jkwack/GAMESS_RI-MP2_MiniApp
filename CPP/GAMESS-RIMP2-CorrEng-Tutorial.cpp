@@ -17,6 +17,7 @@ struct rimp2_input {
 } my;
 
 void Initialization(int argc, char *argv[]);
+void Finalization();
 
 
 int main(int argc, char *argv[]){
@@ -38,6 +39,7 @@ int main(int argc, char *argv[]){
     Initialization(argc, argv);
 
     std::cout<<"E2_ref ="<<my.E2_ref<<std::endl;
+    Finalization();
     return(0);
 
 }
@@ -152,5 +154,14 @@ void Initialization(int argc, char *argv[]){
     std::cout<<"\t\teab[ "<<my.NVIR<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NVIR*8.E-6<<" MB\n";
     std::cout<<"\t\tQVV[ "<<my.NVIR<<" , "<<my.NACT<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NACT*my.NACT*8.E-6<<" MB\n";
 
+}
+
+
+
+void Finalization(){
+    delete[] my.B32;
+    delete[] my.EIG;
+    delete[] my.eij;
+    delete[] my.eab;
 }
 
