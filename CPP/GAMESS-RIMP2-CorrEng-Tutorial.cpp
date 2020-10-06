@@ -55,9 +55,6 @@ void Initialization(int argc, char *argv[]){
     if (fname=="benz.kern" || fname=="cor.kern" || fname=="c60.kern" || fname=="w30.kern" || fname=="w60.kern") {
         std::cout<<"\tReading data from "<<fname<<std::endl;
         Read_Input_File(fname);
-        std::cout<<"Read_Input_File needs to be implemented\n";
-
-        my.B32size=my.NAUXBASD*my.NVIR*my.NACT;
     }
     else{
         if(fname=="benz.rand") {
@@ -154,7 +151,7 @@ void Initialization(int argc, char *argv[]){
     std::cout<<"\t\tB32[ "<<my.NAUXBASD*my.NVIR<<" , "<<my.NACT<<" ] = "<<my.NAUXBASD*my.NVIR*my.NACT*8.E-6<<" MB\n";
     std::cout<<"\t\teij[ "<<my.NACT<<" , "<<my.NACT<<" ] = "<<my.NACT*my.NACT*8.E-6<<" MB\n";
     std::cout<<"\t\teab[ "<<my.NVIR<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NVIR*8.E-6<<" MB\n";
-    std::cout<<"\t\tQVV[ "<<my.NVIR<<" , "<<my.NACT<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NACT*my.NACT*8.E-6<<" MB\n";
+    std::cout<<"\t\tQVV[ "<<my.NVIR<<" , "<<my.NACT<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NACT*my.NVIR*8.E-6<<" MB\n";
 
 }
 
@@ -168,36 +165,48 @@ void Finalization(){
 }
 
 
+
 void Read_Input_File(std::string fname){
     std::ifstream myfile;
-    int a,b,c;
-    char n;
-    std::string line;
-    std::streampos here;
+    int a;
+    double d;
 
     std::cout<<"In Read_Input_File\n";
     myfile.open(fname,std::ios::in | std::ios::binary);
 
     if (myfile.is_open()){
-        for (int i=0;i<10;i++){
-        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
-        myfile.read((char*)&a, sizeof(a));          my.NAUXBASD=a;
-    }
-        // myfile.read((char*)&n, 8);
-        std::cout<<a<<"\n";
-        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
-        myfile.read((char*)&b, sizeof(b));          my.NCOR=b;
-        std::cout<<b<<"\n";
-        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
-        myfile.read((char*)&c, sizeof(c));          my.NACT=c;
-        std::cout<<c<<"\n";
-        here = myfile.tellg(); std::cout<<"here="<<here<<"\n";
-        // myfile.read((char*)&a, sizeof(a));          my.NVIR=a;
-        // myfile.read((char*)&a, sizeof(a));          my.NBF=a;
-    }
 
+        // Read 5 parameters
+        myfile.read((char*)&a, sizeof(a)); my.NAUXBASD=a;
+        myfile.seekg(40-sizeof(a),std::ios::cur);
+        myfile.read((char*)&a, sizeof(a)); my.NCOR=a;
+        myfile.seekg(40-sizeof(a),std::ios::cur);
+        myfile.read((char*)&a, sizeof(a)); my.NACT=a;
+        myfile.seekg(40-sizeof(a),std::ios::cur);
+        myfile.read((char*)&a, sizeof(a)); my.NVIR=a;
+        myfile.seekg(40-sizeof(a),std::ios::cur);
+        myfile.read((char*)&a, sizeof(a)); my.NBF=a;
+        myfile.seekg(40-sizeof(a),std::ios::cur);
 
+        // Read MO energy
+        my.EIG= new double[my.NBF];
+        for (int ii=0;ii<my.NBF;ii++){
+            myfile.read((char*)&d, sizeof(d));  my.EIG[ii]=d;
+            myfile.seekg(40-sizeof(d),std::ios::cur);
+        }
+
+        // Read B332
+        my.B32size=my.NAUXBASD*my.NVIR*my.NACT;
+        my.B32= new double[my.B32size];
+        for (int iact=0;iact<my.NACT;iact++){
+            for (int ixvrt=0;ixvrt<my.NAUXBASD*my.NVIR;ixvrt++){
+                myfile.read((char*)&d, sizeof(d));  my.B32[ixvrt+iact*my.NAUXBASD*my.NVIR]=d;
+                myfile.seekg(40-sizeof(d),std::ios::cur);
+            }
+        }
+
+        // Read mp2 corr energy
+        myfile.read((char*)&d, sizeof(d));  my.E2_ref = d;
+    }
     myfile.close();
-
-
 }
