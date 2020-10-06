@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <new>
 #include <fstream>
+#include <ctime>
 
 struct rimp2_input {
     double *eij, *eab, *B32;           // They were 2D arrays in Fortran
@@ -16,18 +17,21 @@ struct rimp2_input {
     double E2_ref;
 } my;
 
+void RIMP2_Energy_Whole_Combined(double E2);
 void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
 
 
+
 int main(int argc, char *argv[]){
 
     // Energy
-    double E2;
+    double E2, E2_diff, Rel_E2_error;
 
     // Wall time
     double dt;
+    std::clock_t tic,toc;
 
 #if defined(CPU)
     std::cout<<"You are running the code with CPU OpenMP.\n";
@@ -37,11 +41,44 @@ int main(int argc, char *argv[]){
     std::cout<<"You are running the code serially.\n";
 #endif
 
+    // Read or generate iput data
     Initialization(argc, argv);
 
-    std::cout<<"E2_ref ="<<my.E2_ref<<std::endl;
+    // Warming up
+    E2 = 0.0;
+    // Correlation Energy Accumulation
+    RIMP2_Energy_Whole_Combined(E2);
+
+    // Measuing the performance of Correlation Energy Accumulation
+    E2 = 0.0;
+    tic = std::clock();
+    RIMP2_Energy_Whole_Combined(E2);
+    toc = std::clock();
+    dt = (toc-tic)/(double)CLOCKS_PER_SEC;
+
+
+    // Report the performance data and pass/fail status
+    E2_diff = E2 - my.E2_ref;
+    Rel_E2_error = abs(E2_diff/my.E2_ref);
+    std::cout<<"\tResults:\n";
+    std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
+    std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
+    if (Rel_E2_error <= 1.0E-6) {
+        std::cout<<"\t\tPassed :-) \n";
+    }
+    else {
+        std::cout<<"\t\tFailed :-) \n";
+    }
+
+    // Finalize
     Finalization();
     return(0);
+
+}
+
+
+
+void RIMP2_Energy_Whole_Combined(double E2){
 
 }
 
@@ -171,7 +208,6 @@ void Read_Input_File(std::string fname){
     int a;
     double d;
 
-    std::cout<<"In Read_Input_File\n";
     myfile.open(fname,std::ios::in | std::ios::binary);
 
     if (myfile.is_open()){
