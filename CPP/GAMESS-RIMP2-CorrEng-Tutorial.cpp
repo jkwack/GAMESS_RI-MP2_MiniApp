@@ -7,7 +7,9 @@
 #include <new>
 #include <fstream>
 #include <ctime>
+#if defined(MKL)
 #include "mkl.h"
+#endif
 #if defined(OMP) || defined(OFFLOAD)
 #include <omp.h>
 #endif
@@ -35,6 +37,7 @@ void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
+int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc);
 
 #if defined(OMP) || defined(OFFLOAD)
 inline double timer() {return (omp_get_wtime());}
@@ -52,11 +55,16 @@ int main(int argc, char *argv[]){
     double tic,toc;
 
 #if defined(OMP)
-    std::cout<<"You are running the code with OpenMP threading.\n";
+    std::cout<<"You are running the code with OpenMP threading";
 #elif defined(OFFLOAD)
-    std::cout<<"You are running the code with OpenMP offloading on GPU.\n";
+    std::cout<<"You are running the code with OpenMP offloading on GPU";
 #else
-    std::cout<<"You are running the code serially.\n";
+    std::cout<<"You are running the code serially";
+#endif
+#if defined(MKL)
+    std::cout<<" with MKL.\n";
+#else
+    std::cout<<" with a hand-written DGEMM.\n";
 #endif
 
     // Read or generate iput data
@@ -140,10 +148,12 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             int lda=NAUXBASD;
             int ldb=NAUXBASD;
             int ldc=NVIR*iQVV;
+
+#if defined(MKL)
 #if defined(OFFLOAD)
             #pragma omp target variant dispatch use_device_ptr(B32,QVV) device(dnum)
             {
-#endif
+#endif  // for #if defined(OFFLOAD)
             dgemm("T", "N",
                 &m,     &n,     &k,
                 &alpha, &B32[IACT*NAUXBASD*NVIR], &lda,
@@ -151,7 +161,15 @@ void RIMP2_Energy_Whole_Combined(double *E2){
                 &beta,  QVV,    &ldc);
 #if defined(OFFLOAD)
             }
-#endif
+#endif  // for #if defined(OFFLOAD)
+
+#else   // for a no-MKL version
+            dgemm_ATB(&m, &n, &k, 
+                &B32[IACT*NAUXBASD*NVIR], &lda, 
+                &B32[JACT*NAUXBASD*NVIR], &ldb, 
+                QVV, &ldc);
+#endif  // for #if defined(MKL)
+
 
 #if defined(OFFLOAD)
             #pragma omp target map(tofrom:E2_local) device(dnum)
@@ -373,3 +391,24 @@ void Read_Input_File(std::string fname){
     }
     myfile.close();
 }
+
+
+// Extracted from http://www.netlib.org/clapack/cblas/dgemm.c
+int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc)
+{
+#define A(I,J) a[(I)-1 + ((J)-1)* ( *lda)]
+#define B(I,J) b[(I)-1 + ((J)-1)* ( *ldb)]
+#define C(I,J) c[(I)-1 + ((J)-1)* ( *ldc)]
+
+/*  Form  C := A'*B  */
+    for (int j = 1; j <= *n; ++j) {
+        for (int i = 1; i <= *m; ++i) {
+            double temp = 0.;
+            for (int l = 1; l <= *k; ++l) {
+                temp += A(l,i) * B(l,j);
+            }
+            C(i,j) = temp;
+        }
+    }
+    return 0;
+} // end of int dgemm_ATB
