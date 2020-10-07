@@ -16,16 +16,22 @@
 int dnum=0;
 #endif
 
-struct rimp2_input {
-    double *eij, *eab;//, *B32;           // They were 2D arrays in Fortran
-    double *EIG;                       // 1D array
-    int NAUXBASD,NCOR,NACT,NVIR,NBF;
-    int NBLK=0;
-//    int B32size;
-    double E2_ref;
-} my;
-double *B32;
+// struct rimp2_input {
+//     double *eij, *eab;//, *B32;           // They were 2D arrays in Fortran
+//     double *EIG;                       // 1D array
+//     int NAUXBASD,NCOR,NACT,NVIR,NBF;
+//     int NBLK=0;
+// //    int B32size;
+//     double E2_ref;
+// } my;
+double *eij, *eab, *B32;           // They were 2D arrays in Fortran
+double *EIG;                       // 1D array
+int NAUXBASD,NCOR,NACT,NVIR,NBF;
+int NBLK=0;
 int B32size;
+double E2_ref;
+
+NAUXBASD,NCOR,NACT,NVIR,NBF,NBLK,B32size,E2_ref,*eij,*eab,*B32,*EIG
 
 void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
@@ -71,13 +77,13 @@ int main(int argc, char *argv[]){
     dt = toc-tic;
 
     // Report the performance data and pass/fail status
-    E2_diff = E2 - my.E2_ref;
-    Rel_E2_error = abs(E2_diff/my.E2_ref);
+    E2_diff = E2 - E2_ref;
+    Rel_E2_error = abs(E2_diff/E2_ref);
     std::cout<<"\tResults:\n";
 #if defined(OMP)
     std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
 #endif
-//    std::cout<<"\t\tReference MP2 corr. energy              = "<<my.E2_ref<<"\n";
+//    std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
     std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
     std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
     if (Rel_E2_error <= 1.0E-6) {
@@ -99,12 +105,12 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
     double E2_local;
-    int nQVV=my.NVIR*my.NBLK*my.NVIR;
+    int nQVV=NVIR*NBLK*NVIR;
     int iQVV;
 
 #if defined(OMP)
     int Nthreads=omp_get_max_threads();
-    #pragma omp parallel num_threads(Nthreads) shared(my,E2,nQVV) private(QVV,E2_local,iQVV)
+    #pragma omp parallel num_threads(Nthreads) shared(NAUXBASD,NCOR,NACT,NVIR,NBF,NBLK,B32size,E2,nQVV) private(QVV,E2_local,iQVV)
     {
 #endif
     QVV = new double[nQVV];
@@ -112,38 +118,38 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
 #if defined(OFFLOAD)
     #pragma omp target enter data map(alloc:QVV[0:nQVV]) device(dnum)
-    #pragma omp target enter data map(to:my,B32size) device(dnum)
-    #pragma omp target enter data map(to:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],B32[0:B32size]) device(dnum)
+    #pragma omp target enter data map(to:NAUXBASD,NCOR,NACT,NVIR,NBF,NBLK,B32size) device(dnum)
+    #pragma omp target enter data map(to:eij[0:NACT*NACT],eab[0:NVIR*NVIR],B32[0:B32size]) device(dnum)
 #endif
 
 #if defined(OMP)
     #pragma omp for schedule(dynamic)
 #endif
-    for(int JACT=0;JACT<my.NACT;JACT++){
-        for(int IACTmod=0;IACTmod<=JACT/my.NBLK;IACTmod++){
+    for(int JACT=0;JACT<NACT;JACT++){
+        for(int IACTmod=0;IACTmod<=JACT/NBLK;IACTmod++){
 
-            // Set a length of blocks in a raw according my.NBLK
-            int IACT = IACTmod*my.NBLK;
-            if((IACTmod+1)*my.NBLK>JACT+1) { iQVV = JACT - (IACTmod)*my.NBLK + 1; }
-            else { iQVV = my.NBLK; }
+            // Set a length of blocks in a raw according NBLK
+            int IACT = IACTmod*NBLK;
+            if((IACTmod+1)*NBLK>JACT+1) { iQVV = JACT - (IACTmod)*NBLK + 1; }
+            else { iQVV = NBLK; }
 
             // Compute QVV using dgemm
-            int m=my.NVIR*iQVV;
-            int n=my.NVIR;
-            int k=my.NAUXBASD;
+            int m=NVIR*iQVV;
+            int n=NVIR;
+            int k=NAUXBASD;
             double alpha = 1.0E0;
             double beta = 0.0E0;
-            int lda=my.NAUXBASD;
-            int ldb=my.NAUXBASD;
-            int ldc=my.NVIR*iQVV;
+            int lda=NAUXBASD;
+            int ldb=NAUXBASD;
+            int ldc=NVIR*iQVV;
 #if defined(OFFLOAD)
             #pragma omp target variant dispatch use_device_ptr(B32,QVV) device(dnum)
             {
 #endif
             dgemm("T", "N",
                 &m,     &n,     &k,
-                &alpha, &B32[IACT*my.NAUXBASD*my.NVIR], &lda,
-                        &B32[JACT*my.NAUXBASD*my.NVIR], &ldb,
+                &alpha, &B32[IACT*NAUXBASD*NVIR], &lda,
+                        &B32[JACT*NAUXBASD*NVIR], &ldb,
                 &beta,  QVV,    &ldc);
 #if defined(OFFLOAD)
             }
@@ -162,16 +168,16 @@ void RIMP2_Energy_Whole_Combined(double *E2){
                 #pragma omp parallel for reduction(+:E2_t) collapse(2)
                 {
 #endif
-                for(int IB=0; IB<my.NVIR; IB++){
-                    for(int IA=0; IA<my.NVIR; IA++){
+                for(int IB=0; IB<NVIR; IB++){
+                    for(int IA=0; IA<NVIR; IA++){
                         double Tijab = 
-                            QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV]
-                            / ( my.eij[IACT+IC + JACT*my.NACT]
-                                - my.eab[IA + IB*my.NVIR] );
+                            QVV[IA+ IC*NVIR+ IB*NVIR*iQVV]
+                            / ( eij[IACT+IC + JACT*NACT]
+                                - eab[IA + IB*NVIR] );
                         double Q_t = 
-                            QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV]
-                            + QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV];
-                        E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*my.NVIR+ IA*my.NVIR*iQVV]);
+                            QVV[IA+ IC*NVIR+ IB*NVIR*iQVV]
+                            + QVV[IA+ IC*NVIR+ IB*NVIR*iQVV];
+                        E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*NVIR+ IA*NVIR*iQVV]);
                     }   // loop for IA
                 }   // loop for IB
 #if defined(OFFLOAD)
@@ -191,7 +197,7 @@ std::cout<<E2_local<<"\n";
 
 #if defined(OFFLOAD)
     #pragma omp target exit data map(release:QVV[0:nQVV]) device(dnum)
-    #pragma omp target exit data map(release:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],B32[0:B32size]) device(dnum)
+    #pragma omp target exit data map(release:eij[0:NACT*NACT],eab[0:NVIR*NVIR],B32[0:B32size]) device(dnum)
 #endif
 
 
@@ -220,43 +226,43 @@ void Initialization(int argc, char *argv[]){
     else{
         if(fname=="benz.rand") {
             std::cout<<"\tGenerating arbitrary input data with the structure of benz.kern\n";
-            my.NAUXBASD=420;
-            my.NCOR=6;
-            my.NACT=15;
-            my.NVIR=93;
-            my.NBF=120;
+            NAUXBASD=420;
+            NCOR=6;
+            NACT=15;
+            NVIR=93;
+            NBF=120;
         }
         else if(fname=="cor.rand") {
             std::cout<<"\tGenerating arbitrary input data with the structure of cor.kern\n";
-            my.NAUXBASD=1512;
-            my.NCOR=24;
-            my.NACT=54;
-            my.NVIR=282;
-            my.NBF=384;
+            NAUXBASD=1512;
+            NCOR=24;
+            NACT=54;
+            NVIR=282;
+            NBF=384;
         }
         else if (fname=="c60.rand") {
             std::cout<<"\tGenerating arbitrary input data with the structure of c60.kern\n";
-            my.NAUXBASD=3960;
-            my.NCOR=60;
-            my.NACT=120;
-            my.NVIR=360;
-            my.NBF=540;
+            NAUXBASD=3960;
+            NCOR=60;
+            NACT=120;
+            NVIR=360;
+            NBF=540;
         }
         else if (fname=="w30.rand") {
             std::cout<<"\tGenerating arbitrary input data with the structure of w30.kern\n";
-            my.NAUXBASD=2520;
-            my.NCOR=30;
-            my.NACT=120;
-            my.NVIR=570;
-            my.NBF=750;
+            NAUXBASD=2520;
+            NCOR=30;
+            NACT=120;
+            NVIR=570;
+            NBF=750;
         }
         else if (fname=="w60.rand") {
             std::cout<<"\tGenerating arbitrary input data with the structure of w60.kern\n";
-            my.NAUXBASD=5040;
-            my.NCOR=60;
-            my.NACT=240;
-            my.NVIR=1140;
-            my.NBF=1500;
+            NAUXBASD=5040;
+            NCOR=60;
+            NACT=240;
+            NVIR=1140;
+            NBF=1500;
         }
         else{
             std::cout<<"\tError!\n\tOne of the followings should be used as an input:\n";
@@ -265,53 +271,53 @@ void Initialization(int argc, char *argv[]){
         }
 
         // Generate MO energy
-        my.EIG= new double[my.NBF];
-        std::fill_n(my.EIG,my.NBF,1);
-        for (int ii=0;ii<my.NACT;ii++) {
-            my.EIG[ii+my.NCOR] = 2.0;
+        EIG= new double[NBF];
+        std::fill_n(EIG,NBF,1);
+        for (int ii=0;ii<NACT;ii++) {
+            EIG[ii+NCOR] = 2.0;
         }
 
         // Generate B32
-        B32size=my.NAUXBASD*my.NVIR*my.NACT;
+        B32size=NAUXBASD*NVIR*NACT;
         B32= new double[B32size];
-        std::fill_n(B32,B32size,1.0/my.NAUXBASD);
+        std::fill_n(B32,B32size,1.0/NAUXBASD);
 
         // Compute the corresponding mp2 corr energy
-        my.E2_ref=0.5*(my.NVIR*my.NVIR)*(my.NACT*my.NACT)/(my.NAUXBASD*my.NAUXBASD);
+        E2_ref=0.5*(NVIR*NVIR)*(NACT*NACT)/(NAUXBASD*NAUXBASD);
     }
 
     // Some parameters
-    int NOCC = my.NCOR + my.NACT;
+    int NOCC = NCOR + NACT;
 
     // Virt-Virt MO energy pairs
-    my.eab = new double[my.NVIR*my.NVIR];
-    for (int IB=0;IB<my.NVIR;IB++){
+    eab = new double[NVIR*NVIR];
+    for (int IB=0;IB<NVIR;IB++){
         for (int IA=0;IA<=IB;IA++){
-            my.eab[IA+IB*my.NVIR] = my.EIG[IA+NOCC] + my.EIG[IB+NOCC];
-            my.eab[IB+IA*my.NVIR] = my.eab[IA+IB*my.NVIR];
+            eab[IA+IB*NVIR] = EIG[IA+NOCC] + EIG[IB+NOCC];
+            eab[IB+IA*NVIR] = eab[IA+IB*NVIR];
         }
     }
 
     // occ-occ MO energy pairs
-    my.eij = new double[my.NACT*my.NACT];
-    for (int JJ=0;JJ<my.NACT;JJ++){
+    eij = new double[NACT*NACT];
+    for (int JJ=0;JJ<NACT;JJ++){
         for (int II=0;II<=JJ;II++){
-            my.eij[II+JJ*my.NACT] = my.EIG[II+my.NCOR] + my.EIG[JJ+my.NCOR];
+            eij[II+JJ*NACT] = EIG[II+NCOR] + EIG[JJ+NCOR];
         }
     }
 
     // Read the second command line argument for NBLK
-    if (argc > 2) {my.NBLK=std::atoi(argv[2]);}
-    else {my.NBLK=my.NACT;}
+    if (argc > 2) {NBLK=std::atoi(argv[2]);}
+    else {NBLK=NACT;}
 
     // Print out the summary of the input
-    std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<my.NAUXBASD<<" "<<my.NCOR<<" "<<my.NACT<<" "<<my.NVIR<<" "<<my.NBF<<"\n";
-    std::cout<<"\tNBLK = "<<my.NBLK<<"\n";
+    std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<NAUXBASD<<" "<<NCOR<<" "<<NACT<<" "<<NVIR<<" "<<NBF<<"\n";
+    std::cout<<"\tNBLK = "<<NBLK<<"\n";
     std::cout<<"\tMemory Footprint:\n";
-    std::cout<<"\t\tB32[ "<<my.NAUXBASD*my.NVIR<<" , "<<my.NACT<<" ] = "<<my.NAUXBASD*my.NVIR*my.NACT*8.E-6<<" MB\n";
-    std::cout<<"\t\teij[ "<<my.NACT<<" , "<<my.NACT<<" ] = "<<my.NACT*my.NACT*8.E-6<<" MB\n";
-    std::cout<<"\t\teab[ "<<my.NVIR<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NVIR*8.E-6<<" MB\n";
-    std::cout<<"\t\tQVV[ "<<my.NVIR<<" , "<<my.NACT<<" , "<<my.NVIR<<" ] = "<<my.NVIR*my.NACT*my.NVIR*8.E-6<<" MB\n";
+    std::cout<<"\t\tB32[ "<<NAUXBASD*NVIR<<" , "<<NACT<<" ] = "<<NAUXBASD*NVIR*NACT*8.E-6<<" MB\n";
+    std::cout<<"\t\teij[ "<<NACT<<" , "<<NACT<<" ] = "<<NACT*NACT*8.E-6<<" MB\n";
+    std::cout<<"\t\teab[ "<<NVIR<<" , "<<NVIR<<" ] = "<<NVIR*NVIR*8.E-6<<" MB\n";
+    std::cout<<"\t\tQVV[ "<<NVIR<<" , "<<NACT<<" , "<<NVIR<<" ] = "<<NVIR*NACT*NVIR*8.E-6<<" MB\n";
 
 }
 
@@ -319,9 +325,9 @@ void Initialization(int argc, char *argv[]){
 
 void Finalization(){
     delete[] B32;
-    delete[] my.EIG;
-    delete[] my.eij;
-    delete[] my.eab;
+    delete[] EIG;
+    delete[] eij;
+    delete[] eab;
 }
 
 
@@ -336,36 +342,36 @@ void Read_Input_File(std::string fname){
     if (myfile.is_open()){
 
         // Read 5 parameters
-        myfile.read((char*)&a, sizeof(a)); my.NAUXBASD=a;
+        myfile.read((char*)&a, sizeof(a)); NAUXBASD=a;
         myfile.seekg(40-sizeof(a),std::ios::cur);
-        myfile.read((char*)&a, sizeof(a)); my.NCOR=a;
+        myfile.read((char*)&a, sizeof(a)); NCOR=a;
         myfile.seekg(40-sizeof(a),std::ios::cur);
-        myfile.read((char*)&a, sizeof(a)); my.NACT=a;
+        myfile.read((char*)&a, sizeof(a)); NACT=a;
         myfile.seekg(40-sizeof(a),std::ios::cur);
-        myfile.read((char*)&a, sizeof(a)); my.NVIR=a;
+        myfile.read((char*)&a, sizeof(a)); NVIR=a;
         myfile.seekg(40-sizeof(a),std::ios::cur);
-        myfile.read((char*)&a, sizeof(a)); my.NBF=a;
+        myfile.read((char*)&a, sizeof(a)); NBF=a;
         myfile.seekg(40-sizeof(a),std::ios::cur);
 
         // Read MO energy
-        my.EIG= new double[my.NBF];
-        for (int ii=0;ii<my.NBF;ii++){
-            myfile.read((char*)&d, sizeof(d));  my.EIG[ii]=d;
+        EIG= new double[NBF];
+        for (int ii=0;ii<NBF;ii++){
+            myfile.read((char*)&d, sizeof(d));  EIG[ii]=d;
             myfile.seekg(40-sizeof(d),std::ios::cur);
         }
 
         // Read B332
-        B32size=my.NAUXBASD*my.NVIR*my.NACT;
+        B32size=NAUXBASD*NVIR*NACT;
         B32= new double[B32size];
-        for (int iact=0;iact<my.NACT;iact++){
-            for (int ixvrt=0;ixvrt<my.NAUXBASD*my.NVIR;ixvrt++){
-                myfile.read((char*)&d, sizeof(d));  B32[ixvrt+iact*my.NAUXBASD*my.NVIR]=d;
+        for (int iact=0;iact<NACT;iact++){
+            for (int ixvrt=0;ixvrt<NAUXBASD*NVIR;ixvrt++){
+                myfile.read((char*)&d, sizeof(d));  B32[ixvrt+iact*NAUXBASD*NVIR]=d;
                 myfile.seekg(40-sizeof(d),std::ios::cur);
             }
         }
 
         // Read mp2 corr energy
-        myfile.read((char*)&d, sizeof(d));  my.E2_ref = d;
+        myfile.read((char*)&d, sizeof(d));  E2_ref = d;
     }
     myfile.close();
 }
