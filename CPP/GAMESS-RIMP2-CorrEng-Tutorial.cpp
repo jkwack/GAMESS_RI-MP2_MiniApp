@@ -17,13 +17,15 @@ int dnum=0;
 #endif
 
 struct rimp2_input {
-    double *eij, *eab, *B32;           // They were 2D arrays in Fortran
+    double *eij, *eab;//, *B32;           // They were 2D arrays in Fortran
     double *EIG;                       // 1D array
     int NAUXBASD,NCOR,NACT,NVIR,NBF;
     int NQVV=0;
-    int B32size;
+//    int B32size;
     double E2_ref;
 } my;
+double *B32;
+int B32size;
 
 void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
@@ -110,8 +112,8 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
 #if defined(OFFLOAD)
     #pragma omp target enter data map(alloc:QVV[0:nQVV]) device(dnum)
-    #pragma omp target enter data map(to:my) device(dnum)
-    #pragma omp target enter data map(to:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],my.B32[0:my.B32size]) device(dnum)
+    #pragma omp target enter data map(to:my,B32size) device(dnum)
+    #pragma omp target enter data map(to:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],B32[0:B32size]) device(dnum)
 #endif
 
 #if defined(OMP)
@@ -135,13 +137,13 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             int ldb=my.NAUXBASD;
             int ldc=my.NVIR*iQVV;
 #if defined(OFFLOAD)
-            #pragma omp target variant dispatch use_device_ptr(my.B32,QVV) device(dnum)
+            #pragma omp target variant dispatch use_device_ptr(B32,QVV) device(dnum)
             {
 #endif
             dgemm("T", "N",
                 &m,     &n,     &k,
-                &alpha, &my.B32[IACT*my.NAUXBASD*my.NVIR], &lda,
-                        &my.B32[JACT*my.NAUXBASD*my.NVIR], &ldb,
+                &alpha, &B32[IACT*my.NAUXBASD*my.NVIR], &lda,
+                        &B32[JACT*my.NAUXBASD*my.NVIR], &ldb,
                 &beta,  QVV,    &ldc);
 #if defined(OFFLOAD)
             }
@@ -180,16 +182,16 @@ void RIMP2_Energy_Whole_Combined(double *E2){
                 E2_local = E2_local + FAC*E2_t;
             }   // loop for IC
 #if defined(OFFLOAD)
-            }   // omp teams
+            }   // omp teams distribute
             }   // omp target
 #endif
+std::cout<<E2_local<<"\n";
         }   // loop for IACTmod
     }   // loop for JACT
 
 #if defined(OFFLOAD)
     #pragma omp target exit data map(release:QVV[0:nQVV]) device(dnum)
-    #pragma omp target exit data map(release:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],my.B32[0:my.B32size]) device(dnum)
-    #pragma omp target exit data map(release:my) device(dnum)
+    #pragma omp target exit data map(release:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],B32[0:B32size]) device(dnum)
 #endif
 
 
@@ -270,9 +272,9 @@ void Initialization(int argc, char *argv[]){
         }
 
         // Generate B32
-        my.B32size=my.NAUXBASD*my.NVIR*my.NACT;
-        my.B32= new double[my.B32size];
-        std::fill_n(my.B32,my.B32size,1.0/my.NAUXBASD);
+        B32size=my.NAUXBASD*my.NVIR*my.NACT;
+        B32= new double[B32size];
+        std::fill_n(B32,B32size,1.0/my.NAUXBASD);
 
         // Compute the corresponding mp2 corr energy
         my.E2_ref=0.5*(my.NVIR*my.NVIR)*(my.NACT*my.NACT)/(my.NAUXBASD*my.NAUXBASD);
@@ -316,7 +318,7 @@ void Initialization(int argc, char *argv[]){
 
 
 void Finalization(){
-    delete[] my.B32;
+    delete[] B32;
     delete[] my.EIG;
     delete[] my.eij;
     delete[] my.eab;
@@ -353,11 +355,11 @@ void Read_Input_File(std::string fname){
         }
 
         // Read B332
-        my.B32size=my.NAUXBASD*my.NVIR*my.NACT;
-        my.B32= new double[my.B32size];
+        B32size=my.NAUXBASD*my.NVIR*my.NACT;
+        B32= new double[B32size];
         for (int iact=0;iact<my.NACT;iact++){
             for (int ixvrt=0;ixvrt<my.NAUXBASD*my.NVIR;ixvrt++){
-                myfile.read((char*)&d, sizeof(d));  my.B32[ixvrt+iact*my.NAUXBASD*my.NVIR]=d;
+                myfile.read((char*)&d, sizeof(d));  B32[ixvrt+iact*my.NAUXBASD*my.NVIR]=d;
                 myfile.seekg(40-sizeof(d),std::ios::cur);
             }
         }
