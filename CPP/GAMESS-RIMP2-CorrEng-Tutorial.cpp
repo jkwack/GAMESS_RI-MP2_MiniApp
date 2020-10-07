@@ -20,7 +20,7 @@ struct rimp2_input {
     double *eij, *eab;//, *B32;           // They were 2D arrays in Fortran
     double *EIG;                       // 1D array
     int NAUXBASD,NCOR,NACT,NVIR,NBF;
-    int NQVV=0;
+    int NBLK=0;
 //    int B32size;
     double E2_ref;
 } my;
@@ -99,7 +99,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
     double E2_local;
-    int nQVV=my.NVIR*my.NQVV*my.NVIR;
+    int nQVV=my.NVIR*my.NBLK*my.NVIR;
     int iQVV;
 
 #if defined(OMP)
@@ -120,12 +120,12 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     #pragma omp for schedule(dynamic)
 #endif
     for(int JACT=0;JACT<my.NACT;JACT++){
-        for(int IACTmod=0;IACTmod<=JACT/my.NQVV;IACTmod++){
+        for(int IACTmod=0;IACTmod<=JACT/my.NBLK;IACTmod++){
 
-            // Set a length of blocks in a raw according my.NQVV
-            int IACT = IACTmod*my.NQVV;
-            if((IACTmod+1)*my.NQVV>JACT+1) { iQVV = JACT - (IACTmod)*my.NQVV + 1; }
-            else { iQVV = my.NQVV; }
+            // Set a length of blocks in a raw according my.NBLK
+            int IACT = IACTmod*my.NBLK;
+            if((IACTmod+1)*my.NBLK>JACT+1) { iQVV = JACT - (IACTmod)*my.NBLK + 1; }
+            else { iQVV = my.NBLK; }
 
             // Compute QVV using dgemm
             int m=my.NVIR*iQVV;
@@ -300,13 +300,13 @@ void Initialization(int argc, char *argv[]){
         }
     }
 
-    // Read the second command line argument for NQVV
-    if (argc > 2) {my.NQVV=std::atoi(argv[2]);}
-    else {my.NQVV=my.NACT;}
+    // Read the second command line argument for NBLK
+    if (argc > 2) {my.NBLK=std::atoi(argv[2]);}
+    else {my.NBLK=my.NACT;}
 
     // Print out the summary of the input
     std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<my.NAUXBASD<<" "<<my.NCOR<<" "<<my.NACT<<" "<<my.NVIR<<" "<<my.NBF<<"\n";
-    std::cout<<"\tNQVV = "<<my.NQVV<<"\n";
+    std::cout<<"\tNBLK = "<<my.NBLK<<"\n";
     std::cout<<"\tMemory Footprint:\n";
     std::cout<<"\t\tB32[ "<<my.NAUXBASD*my.NVIR<<" , "<<my.NACT<<" ] = "<<my.NAUXBASD*my.NVIR*my.NACT*8.E-6<<" MB\n";
     std::cout<<"\t\teij[ "<<my.NACT<<" , "<<my.NACT<<" ] = "<<my.NACT*my.NACT*8.E-6<<" MB\n";
