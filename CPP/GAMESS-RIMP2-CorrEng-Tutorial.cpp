@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ctime>
 #include "mkl.h"
+#include <omp.h>
 
 struct rimp2_input {
     double *eij, *eab, *B32;           // They were 2D arrays in Fortran
@@ -23,7 +24,11 @@ void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
 
-
+#if defined(OMP)
+inline double timer() {return (omp_get_wtime());}
+#else
+inline double timer() {return (std::clock()/(double)CLOCKS_PER_SEC);}
+#endif
 
 int main(int argc, char *argv[]){
 
@@ -32,10 +37,11 @@ int main(int argc, char *argv[]){
 
     // Wall time
     double dt;
-    std::clock_t tic,toc;
+//    std::clock_t tic,toc;
+    double tic,toc;
 
-#if defined(CPU)
-    std::cout<<"You are running the code with CPU OpenMP.\n";
+#if defined(OMP)
+    std::cout<<"You are running the code with OpenMP threading.\n";
 #elif defined(INTEL_OFFLOAD)
     std::cout<<"You are running the code with mkl on GPU.\n";
 #else
@@ -52,16 +58,19 @@ int main(int argc, char *argv[]){
 
     // Measuing the performance of Correlation Energy Accumulation
     E2 = 0.0;
-    tic = std::clock();
+    tic = timer();
     RIMP2_Energy_Whole_Combined(&E2);
-    toc = std::clock();
-    dt = (toc-tic)/(double)CLOCKS_PER_SEC;
+    toc = timer();
+    dt = toc-tic;
 
 
     // Report the performance data and pass/fail status
     E2_diff = E2 - my.E2_ref;
     Rel_E2_error = abs(E2_diff/my.E2_ref);
     std::cout<<"\tResults:\n";
+#if defined(OMP)
+    std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
+#endif
 //    std::cout<<"\t\tReference MP2 corr. energy              = "<<my.E2_ref<<"\n";
     std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
     std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
@@ -83,11 +92,22 @@ int main(int argc, char *argv[]){
 void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
+    double E2_local;
     int nQVV=my.NVIR*my.NQVV*my.NVIR;
     int iQVV;
+#if defined(OMP)
+//    #pragma omp threadprivate(QVV,nQVV,iQVV)
+    int Nthreads=omp_get_max_threads();
+    #pragma omp parallel num_threads(Nthreads) default(none) shared(my,E2,nQVV,iQVV) private(QVV,E2_local)
+    {
+#endif
 
     QVV = new double[nQVV];
+    E2_local = 0.0E0;
 
+#if defined(OMP)
+    #pragma omp for schedule(dynamic)
+#endif
     for(int JACT=0;JACT<my.NACT;JACT++){
         for(int IACTmod=0;IACTmod<=JACT/my.NQVV;IACTmod++){
 
@@ -124,21 +144,24 @@ void RIMP2_Energy_Whole_Combined(double *E2){
                             QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV]
                             + QVV[IA+ IC*my.NVIR+ IB*my.NVIR*iQVV];
                         E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*my.NVIR+ IA*my.NVIR*iQVV]);
-                    }
-                }
+                    }   // loop for IA
+                }   // loop for IB
                 double FAC=2.0E0;
                 if(IACT+IC == JACT) FAC=1.0E0;
-                *E2 = *E2 + FAC*E2_t;
-            }
-            //std::cout<<IACTmod<<" "<<JACT<<" "<<*E2<<"\n";
+                E2_local = E2_local + FAC*E2_t;
+            }   // loop for IC
+        }   // loop for IACTmod
+    }   // loop for JACT
 
-
-        }
-    }
-
-
+#if defined(OMP)
+    #pragma omp atomic
+#endif
+    *E2 = *E2 + E2_local;
 
     delete[] QVV;
+#if defined(OMP)
+    }    // end of #pragma omp parallel
+#endif
 }
 
 
