@@ -9,12 +9,14 @@
 #include <ctime>
 #if defined(MKL)
 #include "mkl.h"
+   #if defined(OFFLOAD)
+   #include "mkl_omp_offload.h"
+   #endif
 #endif
 #if defined(OMP) || defined(OFFLOAD)
 #include <omp.h>
 #endif
 #if defined(OFFLOAD)
-#include "mkl_omp_offload.h"
 int dnum=0;
 #endif
 
@@ -150,18 +152,18 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             int ldc=NVIR*iQVV;
 
 #if defined(MKL)
-#if defined(OFFLOAD)
+   #if defined(OFFLOAD)
             #pragma omp target variant dispatch use_device_ptr(B32,QVV) device(dnum)
             {
-#endif  // for #if defined(OFFLOAD)
+   #endif  // for #if defined(OFFLOAD)
             dgemm("T", "N",
                 &m,     &n,     &k,
                 &alpha, &B32[IACT*NAUXBASD*NVIR], &lda,
                         &B32[JACT*NAUXBASD*NVIR], &ldb,
                 &beta,  QVV,    &ldc);
-#if defined(OFFLOAD)
+   #if defined(OFFLOAD)
             }
-#endif  // for #if defined(OFFLOAD)
+   #endif  // for #if defined(OFFLOAD)
 
 #else   // for a no-MKL version
             dgemm_ATB(&m, &n, &k, 
@@ -401,6 +403,9 @@ int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, 
 #define C(I,J) c[(I)-1 + ((J)-1)* ( *ldc)]
 
 /*  Form  C := A'*B  */
+#if defined(OFFLOAD)
+    #pragma omp teams distribute parallel for collapse(2)
+#endif
     for (int j = 1; j <= *n; ++j) {
         for (int i = 1; i <= *m; ++i) {
             double temp = 0.;
