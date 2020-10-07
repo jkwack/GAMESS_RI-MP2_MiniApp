@@ -66,4 +66,4 @@ $(EXE_MKL_OFFLOAD): $(SRC)
 .SUFFIXES: .c .o .f90 .cu .cpp .cuf
 .PHONY: clean
 clean:
-	rm -rf *.o *.mod *.modmic $(EXES)
+	rm -rf *.o *.mod *.modmic $(EXES) $(EXES_MKL)
