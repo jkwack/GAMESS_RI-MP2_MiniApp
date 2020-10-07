@@ -8,7 +8,7 @@ FFLAGS_MKL=-Ofast -g -mkl=sequential
 #LDFLAGS_MKL=-L${MKLROOT}/lib/intel64_lin -I${MKLROOT}/include -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
 
 EXE_MKL_OMP=rimp2-CPP-OMP
-FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -g -mkl
+FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -g -mkl=sequential
 #LDFLAGS_MKL_OMP=-L${MKLROOT}/lib/intel64_lin -I${MKLROOT}/include -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
 
 #EXE_MKL_OFFLOAD=rimp2-mkl-offload
