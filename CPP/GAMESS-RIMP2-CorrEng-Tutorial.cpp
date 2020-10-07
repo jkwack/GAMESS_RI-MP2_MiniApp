@@ -8,8 +8,12 @@
 #include <fstream>
 #include <ctime>
 #include "mkl.h"
-#if defined(OMP)
+#if defined(OMP) || defined(OFFLOAD)
 #include <omp.h>
+#endif
+#if defined(OFFLOAD)
+#include "mkl_omp_offload.h"
+int dnum=0;
 #endif
 
 struct rimp2_input {
@@ -26,7 +30,7 @@ void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
 
-#if defined(OMP)
+#if defined(OMP) || defined(OFFLOAD)
 inline double timer() {return (omp_get_wtime());}
 #else
 inline double timer() {return (std::clock()/(double)CLOCKS_PER_SEC);}
@@ -43,8 +47,8 @@ int main(int argc, char *argv[]){
 
 #if defined(OMP)
     std::cout<<"You are running the code with OpenMP threading.\n";
-#elif defined(INTEL_OFFLOAD)
-    std::cout<<"You are running the code with mkl on GPU.\n";
+#elif defined(OFFLOAD)
+    std::cout<<"You are running the code with OpenMP offloading on GPU.\n";
 #else
     std::cout<<"You are running the code serially.\n";
 #endif
@@ -104,6 +108,12 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     QVV = new double[nQVV];
     E2_local = 0.0E0;
 
+#if defined(OFFLOAD)
+    #pragma omp target enter data map(alloc:QVV[0:nQVV]) device(dnum)
+    #pragma omp target enter data map(to:my) device(dnum)
+    #pragma omp target enter data map(to:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],my.B32[0:my.B32size]) device(dnum)
+#endif
+
 #if defined(OMP)
     #pragma omp for schedule(dynamic)
 #endif
@@ -124,15 +134,32 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             int lda=my.NAUXBASD;
             int ldb=my.NAUXBASD;
             int ldc=my.NVIR*iQVV;
+#if defined(OFFLOAD)
+            #pragma omp target variant dispatch use_device_ptr(my.B32,QVV) device(dnum)
+            {
+#endif
             dgemm("T", "N",
                 &m,     &n,     &k,
                 &alpha, &my.B32[IACT*my.NAUXBASD*my.NVIR], &lda,
                         &my.B32[JACT*my.NAUXBASD*my.NVIR], &ldb,
                 &beta,  QVV,    &ldc);
+#if defined(OFFLOAD)
+            }
+#endif
 
+#if defined(OFFLOAD)
+            #pragma omp target map(tofrom:E2_local) device(dnum)
+            {
+            #pragma omp teams distribute reduction(+:E2_local)
+            {
+#endif
             // Accumulate E2
             for(int IC=0; IC<iQVV; IC++){
                 double E2_t=0.0;
+#if defined(OFFLOAD)
+                #pragma omp parallel for reduction(+:E2_t) collapse(2)
+                {
+#endif
                 for(int IB=0; IB<my.NVIR; IB++){
                     for(int IA=0; IA<my.NVIR; IA++){
                         double Tijab = 
@@ -145,12 +172,26 @@ void RIMP2_Energy_Whole_Combined(double *E2){
                         E2_t = E2_t + Tijab * (Q_t - QVV[IB+ IC*my.NVIR+ IA*my.NVIR*iQVV]);
                     }   // loop for IA
                 }   // loop for IB
+#if defined(OFFLOAD)
+                }   // omp parallel for
+#endif    
                 double FAC=2.0E0;
                 if(IACT+IC == JACT) FAC=1.0E0;
                 E2_local = E2_local + FAC*E2_t;
             }   // loop for IC
+#if defined(OFFLOAD)
+            }   // omp teams
+            }   // omp target
+#endif
         }   // loop for IACTmod
     }   // loop for JACT
+
+#if defined(OFFLOAD)
+    #pragma omp target exit data map(release:QVV[0:nQVV]) device(dnum)
+    #pragma omp target exit data map(release:my.eij[0:my.NACT*my.NACT],my.eab[0:my.NVIR*my.NVIR],my.B32[0:my.B32size]) device(dnum)
+    #pragma omp target exit data map(release:my) device(dnum)
+#endif
+
 
 #if defined(OMP)
     #pragma omp atomic
