@@ -8,7 +8,9 @@
 #include <fstream>
 #include <ctime>
 #include "mkl.h"
+#if defined(OMP)
 #include <omp.h>
+#endif
 
 struct rimp2_input {
     double *eij, *eab, *B32;           // They were 2D arrays in Fortran
