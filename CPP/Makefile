@@ -1,19 +1,20 @@
 CPP=icpc
+CPP_OFF=icpx
 
 SDIR=./
 SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
 
 EXE_MKL=rimp2-CPP
-FFLAGS_MKL=-Ofast -g -mkl=sequential
-#LDFLAGS_MKL=-L${MKLROOT}/lib/intel64_lin -I${MKLROOT}/include -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+FFLAGS_MKL=-Ofast -g
+LDFLAGS_MKL=-mkl=sequential
 
 EXE_MKL_OMP=rimp2-CPP-OMP
-FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -g -mkl=sequential
-#LDFLAGS_MKL_OMP=-L${MKLROOT}/lib/intel64_lin -I${MKLROOT}/include -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm
+FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -g
+LDFLAGS_MKL_OMP=-mkl=sequential
 
-#EXE_MKL_OFFLOAD=rimp2-mkl-offload
-#FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -cpp -DINTEL_OFFLOAD -g
-#LDFLAGS_MKL=-mkl
+EXE_MKL_OFFLOAD=rimp2-CPP-OFFLOAD
+FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -DOFFLOAD -g
+LDFLAGS_MKL_OFFLOAD=-mkl
 
 EXES=$(EXE_MKL) $(EXE_MKL_OMP) $(EXE_MKL_OFFLOAD)
 
@@ -28,7 +29,7 @@ $(EXE_MKL_OMP): $(SRC)
 	rm -rf *.o *.mod *.modmic
 
 $(EXE_MKL_OFFLOAD): $(SRC)
-	$(CPP_OFF) -mkl $(FFLAGS_MKL_OFFLOAD) $^ -o $@ $(LDFLAGS_MKL)
+	$(CPP_OFF) $(FFLAGS_MKL_OFFLOAD) $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
 	rm -rf *.o *.mod *.modmic
 
 
