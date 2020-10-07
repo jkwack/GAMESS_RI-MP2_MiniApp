@@ -31,8 +31,6 @@ int NBLK=0;
 int B32size;
 double E2_ref;
 
-NAUXBASD,NCOR,NACT,NVIR,NBF,NBLK,B32size,E2_ref,*eij,*eab,*B32,*EIG
-
 void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
 void Finalization();
