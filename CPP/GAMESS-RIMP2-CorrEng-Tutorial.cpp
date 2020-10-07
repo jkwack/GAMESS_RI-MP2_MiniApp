@@ -39,7 +39,6 @@ int main(int argc, char *argv[]){
 
     // Wall time
     double dt;
-//    std::clock_t tic,toc;
     double tic,toc;
 
 #if defined(OMP)
@@ -64,7 +63,6 @@ int main(int argc, char *argv[]){
     RIMP2_Energy_Whole_Combined(&E2);
     toc = timer();
     dt = toc-tic;
-
 
     // Report the performance data and pass/fail status
     E2_diff = E2 - my.E2_ref;
@@ -97,13 +95,12 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     double E2_local;
     int nQVV=my.NVIR*my.NQVV*my.NVIR;
     int iQVV;
+
 #if defined(OMP)
-//    #pragma omp threadprivate(QVV,nQVV,iQVV)
     int Nthreads=omp_get_max_threads();
-    #pragma omp parallel num_threads(Nthreads) default(none) shared(my,E2,nQVV,iQVV) private(QVV,E2_local)
+    #pragma omp parallel num_threads(Nthreads) shared(my,E2,nQVV) private(QVV,E2_local,iQVV)
     {
 #endif
-
     QVV = new double[nQVV];
     E2_local = 0.0E0;
 
@@ -263,7 +260,6 @@ void Initialization(int argc, char *argv[]){
     // Read the second command line argument for NQVV
     if (argc > 2) {my.NQVV=std::atoi(argv[2]);}
     else {my.NQVV=my.NACT;}
-//    std::cout<<"NQVV="<<my.NQVV<<std::endl;
 
     // Print out the summary of the input
     std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<my.NAUXBASD<<" "<<my.NCOR<<" "<<my.NACT<<" "<<my.NVIR<<" "<<my.NBF<<"\n";
