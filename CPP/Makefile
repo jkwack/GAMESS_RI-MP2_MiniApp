@@ -13,7 +13,7 @@ FFLAGS_OMP=-Ofast -qopenmp -DOMP -g
 LDFLAGS_OMP=
 
 EXE_OFFLOAD=rimp2-CPP-OFFLOAD
-FFLAGS_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -DOFFLOAD -g
+FFLAGS_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -g
 LDFLAGS_OFFLOAD=
 
 EXE_MKL=rimp2-CPP-MKL
@@ -25,7 +25,7 @@ FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -DMKL -g
 LDFLAGS_MKL_OMP=-mkl=sequential
 
 EXE_MKL_OFFLOAD=rimp2-CPP-MKL-OFFLOAD
-FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -DOFFLOAD -DMKL -g
+FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DMKL -g
 LDFLAGS_MKL_OFFLOAD=-mkl
 
 EXES=$(EXE) $(EXE_OMP) $(EXE_OFFLOAD)
