@@ -39,7 +39,7 @@ void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
 void Finalization();
 void Read_Input_File(std::string fname);
-int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc);
+void dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc);
 
 #if defined(OMP) || defined(OFFLOAD)
 inline double timer() {return (omp_get_wtime());}
@@ -166,10 +166,25 @@ void RIMP2_Energy_Whole_Combined(double *E2){
    #endif  // for #if defined(OFFLOAD)
 
 #else   // for a no-MKL version
-            dgemm_ATB(&m, &n, &k, 
+/*            dgemm_ATB(&m, &n, &k, 
                 &B32[IACT*NAUXBASD*NVIR], &lda, 
                 &B32[JACT*NAUXBASD*NVIR], &ldb, 
                 QVV, &ldc);
+*/
+    #if defined(OFFLOAD)
+            #pragma omp target teams distribute parallel for collapse(2) device(dnum)
+    #endif
+            for (int j = 1; j <= n; ++j) {
+               for (int i = 1; i <= m; ++i) {
+                  double temp = 0.;
+                  for (int l = 1; l <= k; ++l) {
+                     temp += B32[IACT*NAUXBASD*NVIR + l-1 + (i-1)*lda]
+                            *B32[JACT*NAUXBASD*NVIR + l-1 + (j-1)*ldb];
+                  }
+                  QVV[i-1 + (j-1)*ldc] = temp;
+               }
+            }
+
 #endif  // for #if defined(MKL)
 
 
@@ -209,7 +224,6 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             }   // omp teams distribute
             }   // omp target
 #endif
-std::cout<<E2_local<<"\n";
         }   // loop for IACTmod
     }   // loop for JACT
 
@@ -396,7 +410,7 @@ void Read_Input_File(std::string fname){
 
 
 // Extracted from http://www.netlib.org/clapack/cblas/dgemm.c
-int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc)
+void dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc)
 {
 #define A(I,J) a[(I)-1 + ((J)-1)* ( *lda)]
 #define B(I,J) b[(I)-1 + ((J)-1)* ( *ldb)]
@@ -404,7 +418,7 @@ int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, 
 
 /*  Form  C := A'*B  */
 #if defined(OFFLOAD)
-    #pragma omp teams distribute parallel for collapse(2)
+    #pragma omp target teams distribute parallel for collapse(2)
 #endif
     for (int j = 1; j <= *n; ++j) {
         for (int i = 1; i <= *m; ++i) {
@@ -415,5 +429,6 @@ int dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, 
             C(i,j) = temp;
         }
     }
-    return 0;
+
+   // return 0;
 } // end of int dgemm_ATB
