@@ -26,7 +26,7 @@ LDFLAGS_MKL_OMP=-mkl=sequential
 
 EXE_MKL_OFFLOAD=rimp2-CPP-MKL-OFFLOAD
 FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DMKL -g
-LDFLAGS_MKL_OFFLOAD=-mkl
+LDFLAGS_MKL_OFFLOAD=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 
 EXES=$(EXE) $(EXE_OMP) $(EXE_OFFLOAD)
 EXES_MKL=$(EXE_MKL) $(EXE_MKL_OMP) $(EXE_MKL_OFFLOAD)
