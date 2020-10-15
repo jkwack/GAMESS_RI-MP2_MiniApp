@@ -15,7 +15,7 @@
       module rimp2_input
         double precision,allocatable,dimension(:,:) :: eij,eab,B32
         double precision,allocatable,dimension(:) :: EIG
-        integer:: NAUXBASD,NCOR,NACT,NVIR,NBF,NQVV
+        integer:: NAUXBASD,NCOR,NACT,NVIR,NBF,NBLK
         double precision:: E2_ref
       end module
 
@@ -178,12 +178,12 @@
         !$OMP PARALLEL NUM_THREADS(Nthreads)                              &
         !$omp default(none)                                               &
         !$omp shared(LddiActStart,LddiActEnd,                             &   
-        !$omp        NACT,NVIR,NAUXBASD,B32,eij,eab,E2,NQVV)              &
+        !$omp        NACT,NVIR,NAUXBASD,B32,eij,eab,E2,NBLK)              &
         !$omp private(IACT,JACT,iQVV,IACTmod,num,num2,fac,ib_n,ic_n,ia_n2,ic_n2,tijab,q_t)
 #endif
 
       E2_omp = 0.0D00
-      ALLOCATE(QVV(NVIR,NQVV,NVIR))
+      ALLOCATE(QVV(NVIR,NBLK,NVIR))
 
 #if defined(INTEL_OFFLOAD)
         !$omp target enter data map(alloc: QVV) 
@@ -194,12 +194,12 @@
         !$omp do schedule(DYNAMIC)
 #endif
       DO JACT=LddiActStart,LddiActEnd
-        DO IACTmod=1,(JACT-1)/NQVV+1
-          IACT = (IACTmod-1)*NQVV+1
-          IF(IACTmod*NQVV>JACT) THEN
-            iQVV = JACT-(IACTmod-1)*NQVV
+        DO IACTmod=1,(JACT-1)/NBLK+1
+          IACT = (IACTmod-1)*NBLK+1
+          IF(IACTmod*NBLK>JACT) THEN
+            iQVV = JACT-(IACTmod-1)*NBLK
           ELSE
-            iQVV = NQVV
+            iQVV = NBLK
           ENDIF
 
 
@@ -226,11 +226,11 @@
             DO IA=1,NVIR
                 DO IC=1,iQVV
                    num = IC+(IB-1)*iQVV 
-                   IB_n = (num -1)/ NQVV + 1
-                   IC_n = mod(num-1, NQVV) + 1
+                   IB_n = (num -1)/ NBLK + 1
+                   IC_n = mod(num-1, NBLK) + 1
                    num2 = IC+(IA-1)*iQVV 
-                   IA_n2 = (num2 - 1) / NQVV + 1
-                   IC_n2 = mod(num2-1, NQVV) + 1
+                   IA_n2 = (num2 - 1) / NBLK + 1
+                   IC_n2 = mod(num2-1, NBLK) + 1
 
                    Tijab=QVV(IA,IC_n,IB_n)/(eij(IACT+IC-1,JACT)-eab(IA,IB))
                    Q_t=QVV(IA,IC_n,IB_n)+QVV(IA,IC_n,IB_n)
@@ -403,14 +403,14 @@
 
       IF (command_argument_count().gt.1) then
         call get_command_argument(2,tmp)
-        read(tmp,*) NQVV
+        read(tmp,*) NBLK
       ELSE
-        NQVV=NACT
+        NBLK=NACT
       ENDIF
 
       if(MASWRK) THEN
         write(*,'(5x,A,5I6)') 'NAUXBASD,NCOR,NACT,NVIR,NBF = ',NAUXBASD,NCOR,NACT,NVIR,NBF
-        write(*,'(5x,A,I10)') 'NQVV =',NQVV
+        write(*,'(5x,A,I10)') 'NBLK =',NBLK
         write(*,'(5x,A)') 'Memory Footprint:'
         write(*,'(10x,A4,I8,A,I7,A,F11.4,A)') 'B32(',NAUXBASD*NVIR,',',NACT,') = ',NAUXBASD*NVIR*NACT*8.D-6,' MB'
         write(*,'(10x,A4,I8,A,I7,A,F11.4,A)') 'eij(',NACT,',',NACT,') = ',NACT*NACT*8.D-6,' MB'
