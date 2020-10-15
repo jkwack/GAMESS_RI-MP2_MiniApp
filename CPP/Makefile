@@ -5,16 +5,20 @@ SDIR=./
 SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
 
 EXE=rimp2-CPP
-FFLAGS=-Ofast -g
+FFLAGS=-Ofast -g -DV1
 LDFLAGS=
 
 EXE_OMP=rimp2-CPP-OMP
-FFLAGS_OMP=-Ofast -qopenmp -DOMP -g
+FFLAGS_OMP=-Ofast -qopenmp -DOMP -DV1 -g
 LDFLAGS_OMP=
 
-EXE_OFFLOAD=rimp2-CPP-OFFLOAD
-FFLAGS_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -g
+EXE_OFFLOAD=rimp2-CPP-OFFLOAD-V1
+FFLAGS_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DV1 -g
 LDFLAGS_OFFLOAD=
+
+EXE_OFFLOAD_V2=rimp2-CPP-OFFLOAD-V2
+FFLAGS_OFFLOAD_V2=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DV2_TILE -g
+LDFLAGS_OFFLOAD_V2=
 
 EXE_MKL=rimp2-CPP-MKL
 FFLAGS_MKL=-Ofast -g -DMKL
@@ -28,7 +32,7 @@ EXE_MKL_OFFLOAD=rimp2-CPP-MKL-OFFLOAD
 FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DMKL -g
 LDFLAGS_MKL_OFFLOAD=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 
-EXES=$(EXE) $(EXE_OMP) $(EXE_OFFLOAD)
+EXES=$(EXE) $(EXE_OMP) $(EXE_OFFLOAD) $(EXE_OFFLOAD_V2)
 EXES_MKL=$(EXE_MKL) $(EXE_MKL_OMP) $(EXE_MKL_OFFLOAD)
 
 mkl: $(EXES_MKL)
@@ -47,6 +51,10 @@ $(EXE_OMP): $(SRC)
 
 $(EXE_OFFLOAD): $(SRC)
 	$(CPP_OFF) $(FFLAGS_OFFLOAD) $^ -o $@ $(LDFLAGS_OFFLOAD)
+	rm -rf *.o *.mod *.modmic
+
+$(EXE_OFFLOAD_V2): $(SRC)
+	$(CPP_OFF) $(FFLAGS_OFFLOAD_V2) $^ -o $@ $(LDFLAGS_OFFLOAD_V2)
 	rm -rf *.o *.mod *.modmic
 
 $(EXE_MKL): $(SRC)

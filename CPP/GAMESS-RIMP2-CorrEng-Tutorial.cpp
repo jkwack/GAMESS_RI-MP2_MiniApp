@@ -165,25 +165,52 @@ void RIMP2_Energy_Whole_Combined(double *E2){
             }
    #endif  // for #if defined(OFFLOAD)
 
-#else   // for a no-MKL version
-/*            dgemm_ATB(&m, &n, &k, 
-                &B32[IACT*NAUXBASD*NVIR], &lda, 
-                &B32[JACT*NAUXBASD*NVIR], &ldb, 
-                QVV, &ldc);
-*/
+#else   // for a non-MKL version
+#if defined(V1)
     #if defined(OFFLOAD)
             #pragma omp target teams distribute parallel for collapse(2) device(dnum)
     #endif
             for (int j = 1; j <= n; ++j) {
-               for (int i = 1; i <= m; ++i) {
+            for (int i = 1; i <= m; ++i) {
+               double temp = 0.;
+               for (int l = 1; l <= k; ++l) {
+                  temp += B32[IACT*NAUXBASD*NVIR + l-1 + (i-1)*lda]
+                         *B32[JACT*NAUXBASD*NVIR + l-1 + (j-1)*ldb];
+               }
+               QVV[i-1 + (j-1)*ldc] = temp;
+            }}
+#elif defined(V2_TILE) // blocking
+#define TILE 1024
+    #if defined(OFFLOAD)
+            #pragma omp target teams distribute parallel for collapse(2) device(dnum)
+    #endif
+            for (int j = 1; j <= n; ++j) {
+            for (int i = 1; i <= m; ++i) {
+               QVV[i-1 + (j-1)*ldc] = 0.0;
+            }}
+
+            for (int jb=1; jb <= n; jb+=TILE) { 
+            for (int ib=1; ib <= m; ib+=TILE) {
+            for (int lb=1; lb <= k; lb+=TILE) {
+               int je=std::min(jb+TILE-1,n);
+               int ie=std::min(ib+TILE-1,m);
+               int le=std::min(lb+TILE-1,k);
+    #if defined(OFFLOAD)
+               #pragma omp target teams distribute parallel for simd collapse(2) device(dnum)
+    #endif
+               for (int j = jb; j <= je; ++j) {
+               for (int i = ib; i <= ie; ++i) {
                   double temp = 0.;
-                  for (int l = 1; l <= k; ++l) {
+                  for (int l = lb; l <= le; ++l) {
                      temp += B32[IACT*NAUXBASD*NVIR + l-1 + (i-1)*lda]
                             *B32[JACT*NAUXBASD*NVIR + l-1 + (j-1)*ldb];
                   }
-                  QVV[i-1 + (j-1)*ldc] = temp;
-               }
-            }
+                  QVV[i-1 + (j-1)*ldc] += temp;
+               }}
+            }}}
+#else
+            std::cout<<"Error! Please build this code again with either -DV1 or -DV2_TILE\n";
+#endif  // for #if defined(V1)
 
 #endif  // for #if defined(MKL)
 
