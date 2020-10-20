@@ -14,10 +14,12 @@ LDFLAGS_OMP=
 
 EXE_OFFLOAD=rimp2-CPP-OFFLOAD-V1
 FFLAGS_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DV1 -g
+FFLAGS_OFFLOAD+= -mllvm -vpo-paropt-enable-64bit-opencl-atomics=true
 LDFLAGS_OFFLOAD=
 
 EXE_OFFLOAD_V2=rimp2-CPP-OFFLOAD-V2
 FFLAGS_OFFLOAD_V2=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DV2_TILE -g
+FFLAGS_OFFLOAD_V2+= -mllvm -vpo-paropt-enable-64bit-opencl-atomics=true
 LDFLAGS_OFFLOAD_V2=
 
 EXE_MKL=rimp2-CPP-MKL
@@ -29,8 +31,13 @@ FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -DMKL -g
 LDFLAGS_MKL_OMP=-mkl=sequential
 
 EXE_MKL_OFFLOAD=rimp2-CPP-MKL-OFFLOAD
-FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DMKL -g
+FFLAGS_MKL_OFFLOAD=-Ofast -fiopenmp -fopenmp-targets=spir64 -DOFFLOAD -DMKL -g
+#FFLAGS_MKL_OFFLOAD+= -fsycl-device-code-split=per_kernel
+#FFLAGS_MKL_OFFLOAD+= -fsycl
+#FFLAGS_MKL_OFFLOAD+= -mllvm -vpo-paropt-use-raw-dev-ptr
 LDFLAGS_MKL_OFFLOAD=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core
+LDFLAGS_MKL_OFFLOAD+= -lmkl_sycl
+#LDFLAGS_MKL_OFFLOAD+= -lOpenCL -lpthread -ldl -lm -lstdc++
 
 EXES=$(EXE) $(EXE_OMP) $(EXE_OFFLOAD) $(EXE_OFFLOAD_V2)
 EXES_MKL=$(EXE_MKL) $(EXE_MKL_OMP) $(EXE_MKL_OFFLOAD)
