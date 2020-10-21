@@ -34,7 +34,7 @@ EXE_MKL_OFFLOAD=rimp2-CPP-MKL-OFFLOAD
 FFLAGS_MKL_OFFLOAD= -fiopenmp -fopenmp-targets=spir64 -D__STRICT_ANSI__ -DOFFLOAD -DMKL -g
 FFLAGS_MKL_OFFLOAD+= -fsycl-device-code-split=per_kernel
 FFLAGS_MKL_OFFLOAD+= -fsycl
-FFLAGS_MKL_OFFLOAD+= -mllvm -vpo-paropt-use-raw-dev-ptr
+#FFLAGS_MKL_OFFLOAD+= -mllvm -vpo-paropt-use-raw-dev-ptr          #not required for Beta10 any more (Louise @MKL team)
 FFLAGS_MKL_OFFLOAD+= -mllvm -vpo-paropt-enable-64bit-opencl-atomics=true
 LDFLAGS_MKL_OFFLOAD=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core
 LDFLAGS_MKL_OFFLOAD+= -lmkl_sycl
