@@ -1,0 +1,10 @@
+#!/bin/bash
+rm -rf Makefile GAMESS-RIMP2-CorrEng-Tutorial.cpp
+ln -s Makefile_beta10 Makefile
+ln -s GAMESS-RIMP2-CorrEng-Tutorial_beta10.cpp GAMESS-RIMP2-CorrEng-Tutorial.cpp
+
+export SYCL_BE=PI_LEVEL_ZERO
+export LIBOMPTARGET_PLUGIN=LEVEL0
+
+
+
