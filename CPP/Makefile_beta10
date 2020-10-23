@@ -30,7 +30,7 @@ FFLAGS_MKL+= -xCORE-AVX2
 LDFLAGS_MKL=-mkl=sequential
 
 EXE_MKL_OMP=rimp2-CPP-MKL-OMP
-FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -DMKL -g -xCORE-AVX2
+FFLAGS_MKL_OMP=-Ofast -qopenmp -DOMP -DMKL -g
 FFLAGS_MKL_OMP+= -xCORE-AVX2
 LDFLAGS_MKL_OMP=-mkl=sequential
 

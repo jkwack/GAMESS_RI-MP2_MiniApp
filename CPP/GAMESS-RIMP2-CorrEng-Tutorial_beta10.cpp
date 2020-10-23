@@ -20,6 +20,8 @@
 int dnum=0;
 #endif
 
+#define TOL 1.0E-6
+
 // struct rimp2_input {
 //     double *eij, *eab;//, *B32;           // They were 2D arrays in Fortran
 //     double *EIG;                       // 1D array
@@ -37,6 +39,7 @@ double E2_ref;
 
 void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
+void run_RIMP2(bool timer_on);
 void Finalization();
 void Read_Input_File(std::string fname);
 void dgemm_ATB(int *m, int *n, int *k, double *a, int *lda, double *b, int *ldb, double *c, int *ldc);
@@ -49,6 +52,21 @@ inline double timer() {return (std::clock()/(double)CLOCKS_PER_SEC);}
 
 int main(int argc, char *argv[]){
 
+    // Read or generate iput data
+    Initialization(argc, argv);
+
+    // Run RIMP2
+    run_RIMP2(true);
+
+    // Finalize
+    Finalization();
+    return(0);
+
+}
+
+
+void run_RIMP2(bool timer_on){
+
     // Energy
     double E2, E2_diff, Rel_E2_error;
 
@@ -57,25 +75,18 @@ int main(int argc, char *argv[]){
     double tic,toc;
 
 #if defined(OMP)
-    std::cout<<"You are running the code with OpenMP threading";
+    std::cout<<"\n\tRunning the code with OpenMP threading";
 #elif defined(OFFLOAD)
-    std::cout<<"You are running the code with OpenMP offloading on GPU";
+    std::cout<<"\n\tRunning the code with OpenMP offloading on GPU";
 #else
-    std::cout<<"You are running the code serially";
+    std::cout<<"\n\tRunning the code serially";
 #endif
 #if defined(MKL)
-    std::cout<<" with MKL.\n";
+    std::cout<<" with MKL:\n";
 #else
-    std::cout<<" with a hand-written DGEMM.\n";
+    std::cout<<" with a hand-written DGEMM:\n";
 #endif
 
-    // Read or generate iput data
-    Initialization(argc, argv);
-
-    // Warming up
-    E2 = 0.0;
-    // Correlation Energy Accumulation
-//    RIMP2_Energy_Whole_Combined(E2);
 
     // Measuing the performance of Correlation Energy Accumulation
     E2 = 0.0;
@@ -85,25 +96,22 @@ int main(int argc, char *argv[]){
     dt = toc-tic;
 
     // Report the performance data and pass/fail status
-    E2_diff = E2 - E2_ref;
-    Rel_E2_error = abs(E2_diff/E2_ref);
-    std::cout<<"\tResults:\n";
+    if(timer_on){
+      E2_diff = E2 - E2_ref;
+      Rel_E2_error = abs(E2_diff/E2_ref);
 #if defined(OMP)
-    std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
+      std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
 #endif
-//    std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
-    std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
-    std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
-    if (Rel_E2_error <= 1.0E-6) {
-        std::cout<<"\t\tPassed :-) \n";
+//      std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
+      std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
+      std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
+      if (Rel_E2_error <= TOL) {
+          std::cout<<"\t\tPassed :-) \n";
+      }
+      else {
+          std::cout<<"\t\tFailed :-) \n";
+      }
     }
-    else {
-        std::cout<<"\t\tFailed :-) \n";
-    }
-
-    // Finalize
-    Finalization();
-    return(0);
 
 }
 
