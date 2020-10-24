@@ -6,7 +6,6 @@
 double *eij, *eab, *B32;           // They were 2D arrays in Fortran
 double *EIG;                       // 1D array
 int NAUXBASD,NCOR,NACT,NVIR,NBF;
-int NBLK=0;
 int B32size;
 double E2_ref;
 
@@ -88,6 +87,7 @@ void Initialization(int argc, char *argv[]){
     std::string fname;
 
     // Read input filename
+    fname="cor.rand";
     if (argc > 1) fname=argv[1];
     if (fname=="benz.kern" || fname=="cor.kern" || fname=="c60.kern" || fname=="w30.kern" || fname=="w60.kern") {
         std::cout<<"\tReading data from "<<fname<<std::endl;
@@ -176,13 +176,8 @@ void Initialization(int argc, char *argv[]){
         }
     }
 
-    // Read the second command line argument for NBLK
-    if (argc > 2) {NBLK=std::atoi(argv[2]);}
-    else {NBLK=NACT;}
-
     // Print out the summary of the input
     std::cout<<"\tNAUXBASD NCOR NACT NVIR NBF = "<<NAUXBASD<<" "<<NCOR<<" "<<NACT<<" "<<NVIR<<" "<<NBF<<"\n";
-    std::cout<<"\tNBLK = "<<NBLK<<"\n";
     std::cout<<"\tMemory Footprint:\n";
     std::cout<<"\t\tB32[ "<<NAUXBASD*NVIR<<" , "<<NACT<<" ] = "<<NAUXBASD*NVIR*NACT*8.E-6<<" MB\n";
     std::cout<<"\t\teij[ "<<NACT<<" , "<<NACT<<" ] = "<<NACT*NACT*8.E-6<<" MB\n";

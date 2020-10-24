@@ -22,8 +22,10 @@ inline double timer() {return (std::clock()/(double)CLOCKS_PER_SEC);}
 extern double *eij, *eab, *B32;           // They were 2D arrays in Fortran
 extern double *EIG;                       // 1D array
 extern int NAUXBASD,NCOR,NACT,NVIR,NBF;
-extern int NBLK;
 extern int B32size;
 extern double E2_ref;
 #endif
 
+#define eab(I,J) eab[I*NVIR+J]
+#define eij(I,J) eij[I*NACT+J]
+#define B32(I,J,K) B32[I*NAUXBASD*NVIR + J*NAUXBASD + K]
