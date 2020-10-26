@@ -63,7 +63,8 @@ void run_RIMP2(bool timer_on){
     // Report the performance data and pass/fail status
     if(timer_on){
       E2_diff = E2 - E2_ref;
-      Rel_E2_error = abs(E2_diff/E2_ref);
+      Rel_E2_error = E2_diff/E2_ref;
+      Rel_E2_error = (Rel_E2_error > 0) ? (Rel_E2_error) : (-Rel_E2_error);
 #if defined(OMP)
       std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
 #endif
