@@ -4,7 +4,7 @@ CPP_OFF=icpx
 SDIR=./
 SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
 SRC_V00=${SDIR}/RIMP2_Energy_Whole_Combined_V00.cpp
-SRC_V01=${SDIR}/RIMP2_Energy_Whole_Combined_V01.cpp
+SRC_V10=${SDIR}/RIMP2_Energy_Whole_Combined_V10.cpp
 SRC_V02=${SDIR}/RIMP2_Energy_Whole_Combined_V02.cpp
 SRC_V03=${SDIR}/RIMP2_Energy_Whole_Combined_V03.cpp
 SRC_V04=${SDIR}/RIMP2_Energy_Whole_Combined_V04.cpp
@@ -28,23 +28,23 @@ LDFLAGS_MKL_OFFLOAD+= -lmkl_sycl
 LDFLAGS_MKL_OFFLOAD+= -lsycl -lOpenCL -lpthread -ldl -lm -lstdc++
 
 EXE_V00=rimp2-CPP-V00-Serial
-EXE_V01=rimp2-CPP-V01-OMP
+EXE_V10=rimp2-CPP-V10-OMP
 EXE_V02=rimp2-CPP-V02-MKL-OMP
 EXE_V03=rimp2-CPP-V03-MKL-OFFLOAD
 EXE_V04=rimp2-CPP-V04-MKL-OFFLOAD-OPT01
 EXE_V05=rimp2-CPP-V05-MKL-OFFLOAD-OPT02
 
 
-EXES=$(EXE_V00) $(EXE_V01) $(EXE_V02) $(EXE_V03) $(EXE_V04) $(EXE_V05)
+EXES=$(EXE_V00) $(EXE_V10) $(EXE_V02) $(EXE_V03) $(EXE_V04) $(EXE_V05)
 
 all: $(EXES)
 
 $(EXE_V00): $(SRC) $(SRC_V00)
-	$(CPP) $(CPPFLAGS_SERIAL) -DV00 $^ -o $@ 
+	$(CPP) $(CPPFLAGS_SERIAL) $^ -o $@ 
 	rm -rf *.o *.mod *.modmic
 
-$(EXE_V01): $(SRC) $(SRC_V01)
-	$(CPP) $(CPPFLAGS_OMP) -DV01 $^ -o $@
+$(EXE_V10): $(SRC) $(SRC_V10)
+	$(CPP) $(CPPFLAGS_OMP) $^ -o $@
 	rm -rf *.o *.mod *.modmic
 
 $(EXE_V02): $(SRC) $(SRC_V02)

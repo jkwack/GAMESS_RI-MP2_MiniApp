@@ -2,18 +2,13 @@
 //  Licensed under the NCSA open source license
 
 #include "common.h"
+#define QVV(I,J) QVV[I*NVIR+J]
 
 void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
     double E2_local=0.0E0;
-    int m,n,k;
-    int lda,ldb,ldc;
-    double alpha = 1.0E0;
-    double beta = 0.0E0;
-
     QVV = new double[NVIR*NVIR];
-    #define QVV(I,J) QVV[I*NVIR+J]
 
     for(int JACT=0;JACT<NACT;JACT++){
     for(int IACT=0;IACT<JACT;IACT++){
@@ -36,7 +31,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
            E2_t += Tijab * (Q_t - QVV(IA,IB) );
         }}   // loop for IA and IB
         double FAC = (IACT==JACT) ? (1.0E0) : (2.0E0);
-        E2_local = E2_local + FAC*E2_t;
+        E2_local += FAC*E2_t;
     }}   // loop for IACT and JACT
 
     *E2 = *E2 + E2_local;
