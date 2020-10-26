@@ -60,7 +60,7 @@ $(EXE_V40): $(SRC) $(SRC_V40)
 	rm -rf *.o *.mod *.modmic
 
 $(EXE_V50): $(SRC) $(SRC_V50)
-	$(CPP_OFF) $(CPPFLAGS_OFFLOAD) $(CPPFLAGS_MKL_OFFLOAD) -DV05 -DMKL $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
+	$(CPP_OFF) $(CPPFLAGS_OFFLOAD) $(CPPFLAGS_MKL_OFFLOAD) -DMKL $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
 	rm -rf *.o *.mod *.modmic
 
 
