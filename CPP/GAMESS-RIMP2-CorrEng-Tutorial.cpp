@@ -20,6 +20,9 @@ int main(int argc, char *argv[]){
     // Read or generate iput data
     Initialization(argc, argv);
 
+    // Warm up
+    run_RIMP2(false);
+
     // Run RIMP2
     run_RIMP2(true);
 
@@ -39,19 +42,23 @@ void run_RIMP2(bool timer_on){
     double dt;
     double tic,toc;
 
-#if defined(OMP)
-    std::cout<<"\n\tRunning the code with OpenMP threading";
-#elif defined(OFFLOAD)
-    std::cout<<"\n\tRunning the code with OpenMP offloading on GPU";
-#else
-    std::cout<<"\n\tRunning the code serially";
-#endif
-#if defined(MKL)
-    std::cout<<" with MKL:\n";
-#else
-    std::cout<<" with a hand-written DGEMM:\n";
-#endif
-
+    if(timer_on){
+       #if defined(OMP)
+       std::cout<<"\n\tRunning the code with OpenMP threading";
+       #elif defined(OFFLOAD)
+       std::cout<<"\n\tRunning the code with OpenMP offloading on GPU";
+       #else
+       std::cout<<"\n\tRunning the code serially";
+       #endif
+       #if defined(MKL)
+       std::cout<<" with MKL...\n";
+       #else
+       std::cout<<" with a hand-written matrix multiplication kernel...\n";
+       #endif
+    }
+    else {
+       std::cout<<"\n\tWarming up...\n";
+    }
 
     // Measuing the performance of Correlation Energy Accumulation
     E2 = 0.0;
@@ -61,13 +68,14 @@ void run_RIMP2(bool timer_on){
     dt = toc-tic;
 
     // Report the performance data and pass/fail status
+    std::cout<<"\tDone\n";
     if(timer_on){
       E2_diff = E2 - E2_ref;
       Rel_E2_error = E2_diff/E2_ref;
       Rel_E2_error = (Rel_E2_error > 0) ? (Rel_E2_error) : (-Rel_E2_error);
-#if defined(OMP)
+      #if defined(OMP)
       std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
-#endif
+      #endif
 //      std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
       std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
       std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
