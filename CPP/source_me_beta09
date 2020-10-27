@@ -1,7 +1,4 @@
 #!/bin/bash
-rm -rf Makefile GAMESS-RIMP2-CorrEng-Tutorial.cpp
+rm -rf Makefile
 ln -s Makefile_beta09 Makefile
-ln -s GAMESS-RIMP2-CorrEng-Tutorial_beta09.cpp GAMESS-RIMP2-CorrEng-Tutorial.cpp
-
-
 

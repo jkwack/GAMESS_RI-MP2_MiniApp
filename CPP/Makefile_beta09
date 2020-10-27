@@ -2,7 +2,7 @@ CPP=icpc
 CPP_OFF=icpx
 
 SDIR=./
-SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
+SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial_beta09.cpp
 
 EXE=rimp2-CPP
 FFLAGS=-Ofast -g -DV1
