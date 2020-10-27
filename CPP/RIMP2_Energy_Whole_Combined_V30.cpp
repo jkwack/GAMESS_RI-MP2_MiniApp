@@ -26,7 +26,6 @@ void RIMP2_Energy_Whole_Combined(double *E2){
         double zero = 0.0;
         B32I = &B32(IACT,0,0);
         B32J = &B32(JACT,0,0);
-//        #pragma omp target data map(to:B32I[0:n*k],B32J[0:n*k])
         #pragma omp target variant dispatch use_device_ptr(B32I,B32J,B32,QVV) device(dnum)
         dgemm("T","N",&n,&n,&k,&one,B32I,&k,B32J,&k,&zero,QVV,&n);
 

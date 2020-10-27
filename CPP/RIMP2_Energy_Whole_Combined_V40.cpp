@@ -25,16 +25,13 @@ void RIMP2_Energy_Whole_Combined(double *E2){
         double one = 1.0;
         double zero = 0.0;
         B32J = &B32(JACT,0,0);
-//        #pragma omp target data map(to:B32J[0:n*k])
         #pragma omp target variant dispatch use_device_ptr(B32,B32J,QVV) device(dnum)
         dgemm("T","N",&m,&n,&k,&one,B32,&k,B32J,&k,&zero,QVV,&m);
 
         // Accumulate E2
-        #pragma omp target map(tofrom:E2_local) device(dnum)
-        #pragma omp teams distribute reduction(+:E2_local)
         for(int IACT=0; IACT<=JACT; IACT++){
            double E2_t=0.0;
-           #pragma omp parallel for reduction(+:E2_t) collapse(2)
+           #pragma omp target teams distribute parallel for reduction(+:E2_t) device(dnum)
            for(int IB=0; IB<NVIR; IB++){
            for(int IA=0; IA<NVIR; IA++){
               double Tijab = QVV(IB,IACT,IA) / ( eij(JACT,IACT) - eab(IB,IA) );
@@ -43,7 +40,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
            }}   // loop for IA and IB
            double FAC = (IACT==JACT) ? (1.0E0) : (2.0E0);
            E2_local +=  FAC*E2_t;
-        }   // loop for IC
+        }   // loop for IACT
     }   // loop for JACT
 
     *E2 = *E2 + E2_local;
