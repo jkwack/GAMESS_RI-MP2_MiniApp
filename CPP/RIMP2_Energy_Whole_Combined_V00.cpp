@@ -8,19 +8,19 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
     double *QVV;
     double E2_local=0.0E0;
-    QVV = new double[NVIR*NVIR];
+    int nQVV = NVIR*NVIR;
+    QVV = new double[nQVV];
 
     for(int JACT=0;JACT<NACT;JACT++){
-    for(int IACT=0;IACT<JACT;IACT++){
+    for(int IACT=0;IACT<=JACT;IACT++){
 
         // Compute QVV
-        std::fill_n(QVV,NVIR*NVIR,0.0);
+        std::fill_n(QVV,nQVV,0.0);
         for (int j = 0; j < NVIR; ++j) {
         for (int i = 0; i < NVIR; ++i) {
         for (int l = 0; l < NAUXBASD; ++l) {
-           QVV(j,i) += B32(IACT,i,l)*B32(JACT,i,l);
+           QVV(j,i) += B32(IACT,i,l)*B32(JACT,j,l);
         }}}
-
 
         // Accumulate E2
         double E2_t=0.0;
