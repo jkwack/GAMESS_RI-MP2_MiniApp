@@ -32,7 +32,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
 
         // Accumulate E2
         double E2_t=0.0;
-        #pragma omp target teams distribute parallel for reduction(+:E2_t) map(tofrom:E2_t) collapse(2) device(dnum)
+        #pragma omp target teams distribute parallel for reduction(+:E2_t) map(tofrom:E2_t) device(dnum)
         {
            for(int IB=0; IB<NVIR; IB++){
            for(int IA=0; IA<NVIR; IA++){
