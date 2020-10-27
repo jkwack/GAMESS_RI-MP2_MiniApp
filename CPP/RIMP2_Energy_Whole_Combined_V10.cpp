@@ -10,7 +10,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     double E2_local=0.0E0;
 
     int Nthreads=omp_get_max_threads();
-    #pragma omp parallel num_threads(Nthreads) default(shared) private(QVV,E2_local)
+    #pragma omp parallel num_threads(Nthreads) default(shared) firstprivate(QVV,E2_local)
     {
        QVV = new double[NVIR*NVIR];
 

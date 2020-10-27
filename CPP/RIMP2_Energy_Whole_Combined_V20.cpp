@@ -11,30 +11,20 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     double E2_local=0.0E0;
 
     int Nthreads=omp_get_max_threads();
-    #pragma omp parallel num_threads(Nthreads) shared(B32,eij,eab,NAUXBASD,NACT,NVIR,E2) private(QVV,E2_local)
+    #pragma omp parallel num_threads(Nthreads) default(shared) firstprivate(QVV,E2_local)
     {
        QVV = new double[NVIR*NVIR];
-       E2_local = 0.0E0;
 
        #pragma omp for schedule(dynamic) 
        for(int JACT=0;JACT<NACT;JACT++){
-       for(int IACT=0;IACT<JACT;IACT++){
+       for(int IACT=0;IACT<=JACT;IACT++){
 
            // Compute QVV
-           int m=NVIR;
            int n=NVIR;
            int k=NAUXBASD;
-           int lda=NAUXBASD;
-           int ldb=NAUXBASD;
-           int ldc=NVIR;
-           double alpha = 1.0;
-           double beta = 0.0;
-           dgemm("T", "N",
-                &m,     &n,     &k,
-                &alpha, &B32[IACT*NAUXBASD*NVIR],  &lda,
-                        &B32[JACT*NAUXBASD*NVIR],  &ldb,
-                &beta,  QVV,                       &ldc);
-
+           double one = 1.0;
+           double zero = 0.0;
+           dgemm("T","N",&n,&n,&k,&one,&B32(IACT,0,0),&k,&B32(JACT,0,0),&k,&zero,QVV,&n);
 
            // Accumulate E2
            double E2_t=0.0;
