@@ -13,6 +13,8 @@ source /data/oneapi_workshop/sc20/advisor_2021.1.1/advisor-vars.sh
 
 export SYCL_BE=PI_LEVEL_ZERO
 export LIBOMPTARGET_PLUGIN=LEVEL0
+export ADVIXE_EXPERIMENTAL=gpu-profiling
+export ADVIXE_MORE_GTPIN_OPTIONS="-ignore_l0_igc_info"
 
 
 
