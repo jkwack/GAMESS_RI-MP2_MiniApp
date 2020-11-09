@@ -6,6 +6,9 @@ SRC=${SDIR}/GAMESS-RIMP2-CorrEng-Tutorial.cpp
 SRC_V00=${SDIR}/RIMP2_Energy_Whole_Combined_V00.cpp
 SRC_V10=${SDIR}/RIMP2_Energy_Whole_Combined_V10.cpp
 SRC_V20=${SDIR}/RIMP2_Energy_Whole_Combined_V20.cpp
+SRC_V30=${SDIR}/RIMP2_Energy_Whole_Combined_V30.cpp
+SRC_V35=${SDIR}/RIMP2_Energy_Whole_Combined_V35.cpp
+SRC_V40=${SDIR}/RIMP2_Energy_Whole_Combined_V40.cpp
 SRC_V45=${SDIR}/RIMP2_Energy_Whole_Combined_V45.cpp
 SRC_V50=${SDIR}/RIMP2_Energy_Whole_Combined_V50.cpp
 
@@ -29,10 +32,13 @@ LDFLAGS_MKL_OFFLOAD+= -lsycl -lOpenCL -lpthread -ldl -lm -lstdc++
 EXE_V00=rimp2-CPP-V00-Serial
 EXE_V10=rimp2-CPP-V10-OMP
 EXE_V20=rimp2-CPP-V20-MKL-OMP
+EXE_V30=rimp2-CPP-V30-MKL-OFFLOAD
+EXE_V35=rimp2-CPP-V35-MKL-OFFLOAD
+EXE_V40=rimp2-CPP-V40-MKL-OFFLOAD-OPT
 EXE_V45=rimp2-CPP-V45-MKL-OFFLOAD-OPT
 EXE_V50=rimp2-CPP-V50-MKL-OMP-OFFLOAD
 
-EXES=$(EXE_V00) $(EXE_V10) $(EXE_V20) $(EXE_V45) $(EXE_V50)
+EXES=$(EXE_V00) $(EXE_V10) $(EXE_V20) $(EXE_V30) $(EXE_V35) $(EXE_V40) $(EXE_V45) $(EXE_V50)
 
 all: $(EXES)
 
@@ -46,6 +52,18 @@ $(EXE_V10): $(SRC) $(SRC_V10)
 
 $(EXE_V20): $(SRC) $(SRC_V20)
 	$(CPP) $(CPPFLAGS_OMP) -DMKL $^ -o $@ $(LDFLAGS_MKL)
+	rm -rf *.o *.mod *.modmic
+
+$(EXE_V30): $(SRC) $(SRC_V30)
+	$(CPP_OFF) $(CPPFLAGS_OFFLOAD) $(CPPFLAGS_MKL_OFFLOAD) -DMKL $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
+	rm -rf *.o *.mod *.modmic
+
+$(EXE_V35): $(SRC) $(SRC_V35)
+	$(CPP_OFF) $(CPPFLAGS_OFFLOAD) $(CPPFLAGS_MKL_OFFLOAD) -DMKL $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
+	rm -rf *.o *.mod *.modmic
+
+$(EXE_V40): $(SRC) $(SRC_V40)
+	$(CPP_OFF) $(CPPFLAGS_OFFLOAD) $(CPPFLAGS_MKL_OFFLOAD) -DMKL $^ -o $@ $(LDFLAGS_MKL_OFFLOAD)
 	rm -rf *.o *.mod *.modmic
 
 $(EXE_V45): $(SRC) $(SRC_V45)
