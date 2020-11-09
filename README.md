@@ -66,36 +66,35 @@ The above data sets require significant I/O times before computing the correlati
 ### Intel DevCould
 
 #### Build the executables
-  
-#### Run via an interactive job:
-
-#### Run via a batch job:
-
-
-
-### JLSE Skylake nodes at ALCF
-
-#### Build the executables 
-    rimp2-mkl:      rimp2 with OpenMP threading + MKL on CPU
-
-    $ source source_me_JLSE_Intel
-    $ make clean
+    $ git clone --single-branch --branch tutorial-SC20 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp.git
+    $ cd GAMESS_RI-MP2_MiniApp/CPP/
+    $ source source_me_SC20_tutorial
     $ make all
 
-#### Run via an interactive job:
-    $ qsub -I -n 1 -t 120 -q skylake_8180
-    $ source source_me_JLSE_Intel
-    $ NMPI=x NTHREAD=x INPUT=xxx EXEC='rimp2-zzz' ./run_cpu.sh
-        # NMPI is the number of MPIs. If it doesn't exist, NMPI is set to 1.
-        # NTHREAD is the number of OpenMP threads per MPI. If it doesn't exist, NTHREAD is set to min(56, 56*NNODES/NMPI).
-        # INPUT is the input name. If it doesn't exist, INPUT is set to benz.kern.
-        # EXEC is the executable name(s). If it doesn't exist. EXEC is set to 'rimp2-mkl' for run_cpu.sh
+  
+#### Start an interactive job with an Intel Gen9 node:
+    qsub -I -l nodes=1:gpu:ppn=2 -d .
 
-#### Run via a batch job:
-    $ qsub ./run_batch_JLSE_example.sh            
-        # This example runs rimp2_cpu.sh with two inputs (cor.kern, and c60.kern)
-        #     on 1 Skylake 8180 node with 1, 2, and 4 MPI ranks ( 56 threads in total).
-        # You may modify this example script for your own tests.
+
+### JLSE IRIS nodes at ALCF
+
+#### Build the executables 
+    rimp2-CPP-V00-Serial:         a serial version
+    rimp2-CPP-V10-OMP:            an OpenMP version
+    rimp2-CPP-V20-MKL-OMP:        an OpenMP version with MKL
+    rimp2-CPP-V45-MKL-OFFLOAD-OPT:an OpenMP offloading version with MKL
+    rimp2-CPP-V50-MKL-OMP-OFFLOAD:a hybrid version on CPU and GPU
+
+    $ cd GAMESS_RI-MP2_MiniApp
+    $ source source_me_SC20_tutorial
+    $ cd CPP
+    $ source source_me_beta10
+    $ make all
+
+
+#### Start an interactive job with an IRIS node:
+    $ qsub -I -n 1 -t 360 -q iris
+
 
 
 ## Figure-of-Merit (FOM)
