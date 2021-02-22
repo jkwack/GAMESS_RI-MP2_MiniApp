@@ -31,7 +31,9 @@ void RIMP2_Energy_Whole_Combined(double *E2){
         double zero = 0.0;
         B32J = &B32(JACT,0,0);
         #pragma omp target variant dispatch use_device_ptr(B32,B32J,QVV) device(dnum)
-        dgemm("T","N",&m,&n,&k,&one,B32,&k,B32J,&k,&zero,QVV,&m);
+
+        cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, m,n,k,one,B32,k,B32J,k,zero,QVV,m);
+//      dgemm("T","N",&m,&n,&k,&one,B32,&k,B32J,&k,&zero,QVV,&m);
         #pragma omp target update from(QVV[0:NVIR*NACT*NVIR])
 
         // Accumulate E2
