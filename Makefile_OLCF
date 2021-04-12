@@ -2,8 +2,9 @@ FC=xlf90_r
 
 EXE_TUTORIAL=my_rimp2
 EXE_TUTORIAL_V2=my_rimp2_v2
+EXE_TUTORIAL_CPU=my_rimp2_cpu
 
-all: $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2)
+all: $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2) $(EXE_TUTORIAL_CPU)
 
 $(EXE_TUTORIAL): GAMESS-RIMP2-CorrEng-Tutorial.f90
 	$(FC) -qsmp=omp -qoffload $^ -o my_rimp2 -lnvblas -L$(OLCF_ESSL_ROOT)/lib64 -lessl
@@ -11,5 +12,8 @@ $(EXE_TUTORIAL): GAMESS-RIMP2-CorrEng-Tutorial.f90
 $(EXE_TUTORIAL_V2): GAMESS-RIMP2-CorrEng-Tutorial-V2.f90
 	$(FC) -qsmp=omp -qoffload $^ -o my_rimp2_v2 -lnvblas -L$(OLCF_ESSL_ROOT)/lib64 -lessl
 
+$(EXE_TUTORIAL_CPU): GAMESS-RIMP2-CorrEng-Tutorial-cpu.f90
+	$(FC) -qsmp=omp $^ -o my_rimp2_cpu -L$(OLCF_ESSL_ROOT)/lib64 -lessl
+
 clean:
-	rm -rf *.o *.mod $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2)
+	rm -rf *.o *.mod $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2) $(EXE_TUTORIAL_CPU)
