@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf Makefile
+ln -s Makefile_2021.04.30.002_all Makefile
