@@ -18,8 +18,9 @@ CPPFLAGS_SERIAL+= -xCORE-AVX2
 CPPFLAGS_OMP=-Ofast -qopenmp -DOMP -g
 CPPFLAGS_OMP+= -xCORE-AVX2
 
-CPPFLAGS_OFFLOAD=-fiopenmp -DOFFLOAD -g
-CPPFLAGS_OFFLOAD+= -fopenmp-targets=spir64="-mllvm -vpo-paropt-enable-64bit-opencl-atomics=true"
+CPPFLAGS_OFFLOAD=-fiopenmp -DOFFLOAD 
+#CPPFLAGS_OFFLOAD+= -fopenmp-targets=spir64="-mllvm -vpo-paropt-enable-64bit-opencl-atomics=true"
+CPPFLAGS_OFFLOAD+= -fopenmp-targets=spir64
 
 CPPFLAGS_MKL_OFFLOAD= -fsycl
 
