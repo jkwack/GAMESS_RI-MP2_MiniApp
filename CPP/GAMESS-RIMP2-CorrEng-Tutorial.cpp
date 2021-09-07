@@ -8,7 +8,9 @@ double *EIG;                       // 1D array
 int NAUXBASD,NCOR,NACT,NVIR,NBF;
 int B32size;
 double E2_ref;
-
+#ifdef CUDA_VERSION
+cublasHandle_t handle;
+#endif
 void RIMP2_Energy_Whole_Combined(double *E2);
 void Initialization(int argc, char *argv[]);
 void run_RIMP2(bool timer_on);
@@ -76,7 +78,8 @@ void run_RIMP2(bool timer_on){
       #if defined(OMP)
       std::cout<<"\t\tNumber of OMP threads                   = "<<omp_get_max_threads()<<"\n";
       #endif
-//      std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
+      std::cout<<"\t\tReference MP2 corr. energy              = "<<E2_ref<<"\n";
+      std::cout<<"\t\tComputed MP2 corr. energy              = "<<E2<<"\n";
       std::cout<<"\t\tRel. error of computed MP2 corr. energy = "<<Rel_E2_error<<"\n";
       std::cout<<"\t\tWall time                               = "<<dt<<" sec\n";
       if (Rel_E2_error <= TOL) {
@@ -193,6 +196,14 @@ void Initialization(int argc, char *argv[]){
     std::cout<<"\t\teab[ "<<NVIR<<" , "<<NVIR<<" ] = "<<NVIR*NVIR*8.E-6<<" MB\n";
     std::cout<<"\t\tQVV[ "<<NVIR<<" , "<<NACT<<" , "<<NVIR<<" ] = "<<NVIR*NACT*NVIR*8.E-6<<" MB\n";
 
+#ifdef CUDA_VERSION
+  if (cublasCreate(&handle) != CUBLAS_STATUS_SUCCESS)
+    {
+      fprintf(stdout, "CUBLAS initialization failed!\n");
+      exit(EXIT_FAILURE);
+    }
+#endif
+    
 }
 
 
@@ -202,6 +213,9 @@ void Finalization(){
     delete[] EIG;
     delete[] eij;
     delete[] eab;
+#ifdef CUDA_VERSION
+    cublasDestroy(handle);
+#endif
 }
 
 

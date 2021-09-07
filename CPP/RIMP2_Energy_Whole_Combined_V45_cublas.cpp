@@ -1,8 +1,10 @@
 //  Copyright (C) 2020, Argonne National Laboratory. All Rights Reserved.
 //  Licensed under the NCSA open source license
 
+#ifndef CUDA_VERSION
 #include "mkl.h"
 #include "mkl_omp_offload.h"
+#endif
 #include "common.h"
 #define QVV(I,J,K) QVV[I*NVIR*(JACT+1)+J*NVIR+K]
 
@@ -19,15 +21,20 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     for(int JACT=0;JACT<NACT;JACT++){
 
         // Compute QVV
-        const long long  m=NVIR*(JACT+1);
-        const long long  n=NVIR;
-        const long long  k=NAUXBASD;
+        int m=NVIR*(JACT+1);
+        int n=NVIR;
+        int k=NAUXBASD;
         double one = 1.0;
         double zero = 0.0;
-        B32J = &B32(JACT,0,0);
-        #pragma omp target variant dispatch use_device_ptr(B32,B32J,QVV) device(dnum)
-        //cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, m,n,k,one,B32,k,B32J,k,zero,QVV,m);
-	dgemm("T","N",&m,&n,&k,&one,B32,&k,B32J,&k,&zero,QVV,&m);
+	B32J = &B32(JACT,0,0);
+
+	int cublas_error = cublasDgemm(handle,CUBLAS_OP_T, CUBLAS_OP_N, m,n,k, &one, B32, k, B32J, k, &zero, QVV, m);
+	if( cublas_error != CUBLAS_STATUS_SUCCESS )
+	  {
+	    printf( "failed %d.\n", cublas_error );
+	    exit(1);
+	  }
+	cudaDeviceSynchronize();
 
         // Accumulate E2
         #pragma omp target teams distribute reduction(+:E2_local) device(dnum)

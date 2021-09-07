@@ -29,3 +29,9 @@ extern double E2_ref;
 #define eab(I,J) eab[I*NVIR+J]
 #define eij(I,J) eij[I*NACT+J]
 #define B32(I,J,K) B32[I*NAUXBASD*NVIR + J*NAUXBASD + K]
+
+#ifdef CUDA_VERSION
+#include <cuda_runtime_api.h>
+#include <cublas_v2.h>
+  extern cublasHandle_t handle;
+#endif
