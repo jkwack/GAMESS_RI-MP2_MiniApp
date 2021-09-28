@@ -220,7 +220,11 @@
       use rimp2_shared
       use rimp2_input
 #if defined(INTEL_OFFLOAD)
-      use onemkl_blas_omp_offload
+#if defined(MKL_ILP64)
+use onemkl_blas_omp_offload_ilp64
+#else
+use onemkl_blas_omp_offload_lp64
+#endif
 #endif
       implicit double precision(a-h,o-z)
 
@@ -318,7 +322,11 @@
 
 
 #if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
-!$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp)
+#if defined(THREADLIMIT)
+        !$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp) private(ib,ia,ic,num,ib_n,ic_n,num2,ia_n2,ic_n2,tijab,q_t,fac) thread_limit(TLIMIT) num_teams(NTEAMS)
+#else
+        !$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp)
+#endif
 #endif
         DO IB=1,NVIR
            DO IA=1,NVIR
