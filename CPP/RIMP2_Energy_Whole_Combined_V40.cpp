@@ -19,9 +19,9 @@ void RIMP2_Energy_Whole_Combined(double *E2){
     for(int JACT=0;JACT<NACT;JACT++){
 
         // Compute QVV
-        int m=NVIR*(JACT+1);
-        int n=NVIR;
-        int k=NAUXBASD;
+        const MKL_INT m=NVIR*(JACT+1);
+        const MKL_INT n=NVIR;
+        const MKL_INT k=NAUXBASD;
         double one = 1.0;
         double zero = 0.0;
         B32J = &B32(JACT,0,0);
