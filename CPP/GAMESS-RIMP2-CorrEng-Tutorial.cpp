@@ -143,7 +143,31 @@ void Initialization(int argc, char *argv[]){
             NVIR=1140;
             NBF=1500;
         }
-        else{
+        else if (fname=="w25.rand") {
+            std::cout<<"\tGenerating arbitrary input data with the structure of w25.kern\n";
+            NAUXBASD=2100;
+            NCOR=25;
+            NACT=100;
+            NVIR=475;
+            NBF=625;
+        }
+        else if (fname=="w20.rand") {
+            std::cout<<"\tGenerating arbitrary input data with the structure of w20.kern\n";
+            NAUXBASD=1680;
+            NCOR=20;
+            NACT=80;
+            NVIR=380;
+            NBF=500;
+	}
+       else if (fname=="w15.rand") {
+            std::cout<<"\tGenerating arbitrary input data with the structure of w15.kern\n";
+            NAUXBASD=1260;
+            NCOR=15;
+            NACT=60;
+            NVIR=285;
+            NBF=375;
+        }
+	else{
             std::cout<<"\tError!\n\tOne of the followings should be used as an input:\n";
             std::cout<<"\t\tbenz.kern, cor.kern, c60.kern, w30.kern, or w60.kern for actual data sets, or\n";
             std::cout<<"\t\tbenz.rand, cor.rand, c60.rand, w30.rand, or w60.rand for arbitrary data sets.\n";
