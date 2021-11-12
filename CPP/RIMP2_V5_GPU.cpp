@@ -32,7 +32,7 @@ void RIMP2_Energy_Whole_Combined(double *E2){
         #pragma omp target teams distribute reduction(+:E2_local) num_teams(90) thread_limit(72) device(dnum)
         for(int IACT=0; IACT<=JACT; IACT++){
            double E2_t=0.0;
-           #pragma omp parallel for simd reduction(+:E2_t) simdlen(8)
+           #pragma omp parallel for simd reduction(+:E2_t) 
            for(int IB=0; IB<NVIR; IB++){
            for(int IA=0; IA<NVIR; IA++){
               double Tijab = QVV(IB,IACT,IA) / ( eij(JACT,IACT) - eab(IB,IA) );
