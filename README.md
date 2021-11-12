@@ -1,4 +1,4 @@
-# GAMESS RI-MP2 mini-app for SC20 Roofline tutorial
+# GAMESS RI-MP2 mini-app for SC21 Roofline tutorial
 
 This is a simplifed version of GAMESS RI-MP2 mini-app for SC21 Roofline tutorial.  
 For more details about GAMESS RI-MP2 mini-app, please visit the following github repository:  
@@ -94,4 +94,30 @@ The above data sets require significant I/O times before computing the correlati
 #### Start an interactive job with an IRIS node:
     $ qsub -I -n 1 -t 360 -q iris
 
+## Examples of runs
+
+### A quick test for build and validation
+The following is an example of building and running this mini-app on JLSE (i.e., Argonne testbed system):
+
+    $ cd GAMESS_RI-MP2_MiniApp_Dev/CPP
+    $ module load oneapi
+    $ make all
+      icpc -Ofast -g -xCORE-AVX2 GAMESS-RIMP2-CorrEng-Tutorial.cpp RIMP2_V0_CPU.cpp -o rimp2-V0-CPU 
+      icpc -Ofast -g -xCORE-AVX2 -DMKL GAMESS-RIMP2-CorrEng-Tutorial.cpp RIMP2_V1_CPU.cpp -o rimp2-V1-CPU -qmkl=sequential
+      icpx -fiopenmp -DOFFLOAD -g -O3 -fopenmp-targets=spir64 -fsycl -DMKL GAMESS-RIMP2-CorrEng-Tutorial.cpp RIMP2_V3_GPU.cpp -o rimp2-V3-GPU -qmkl 
+      icpx -fiopenmp -DOFFLOAD -g -O3 -fopenmp-targets=spir64 -fsycl -DMKL GAMESS-RIMP2-CorrEng-Tutorial.cpp RIMP2_V5_GPU.cpp -o rimp2-V5-GPU -qmkl 
+    $ ./rimp2-V5-GPU w25.rand
+	Generating arbitrary input data with the structure of w25.kern
+	NAUXBASD NCOR NACT NVIR NBF = 2100 25 100 475 625
+	Memory Footprint:
+		B32[ 997500 , 100 ] = 798 MB
+		eij[ 100 , 100 ] = 0.08 MB
+		eab[ 475 , 475 ] = 1.805 MB
+		QVV[ 475 , 100 , 475 ] = 180.5 MB
+
+	Running the code with OpenMP offloading on GPU with MKL...
+	Done
+		Rel. error of computed MP2 corr. energy = 1.5999e-14
+		Wall time                               = 24.8179 sec
+		Passed :-) 
 
