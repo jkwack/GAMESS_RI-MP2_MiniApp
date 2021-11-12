@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
     Initialization(argc, argv);
 
     // Warm up
-    run_RIMP2(false);
+//    run_RIMP2(false);
 
     // Run RIMP2
     run_RIMP2(true);
