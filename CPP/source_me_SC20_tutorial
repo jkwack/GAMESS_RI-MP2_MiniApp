@@ -1,8 +1,0 @@
-#!/bin/bash
-export ADVSC20=/data/oneapi_workshop/sc20.tutorial
-source ${ADVSC20}/linux_prod/compiler/env/vars.sh
-source ${MKLROOT}/env/vars.sh
-source ${ADVSC20}/advisor_2021.1.1/advisor-vars.sh
-
-rm -rf Makefile
-ln -s Makefile_beta10 Makefile

@@ -1,9 +1,0 @@
-#!/bin/bash
-rm -rf Makefile 
-ln -s Makefile_beta10 Makefile
-
-export SYCL_BE=PI_LEVEL_ZERO
-export LIBOMPTARGET_PLUGIN=LEVEL0
-
-
-

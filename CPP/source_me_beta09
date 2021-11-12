@@ -1,4 +1,0 @@
-#!/bin/bash
-rm -rf Makefile
-ln -s Makefile_beta09 Makefile
-
