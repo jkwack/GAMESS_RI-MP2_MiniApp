@@ -103,6 +103,7 @@
 
       ! Warming up
       E2_mpi=0.0D0
+      st=omp_get_wtime()
       ! corr energy accumulation
 #if defined(COMBINED_VERSION)
       CALL RIMP2_ENERGY_WHOLE_COMBINED(E2_mpi,         &
@@ -114,7 +115,7 @@
       ! Actual computation
       ! init E2_mpi
       E2_mpi=0.0D00
-
+      print *, "time: ", omp_get_wtime()-st
       ! tic
       st=omp_get_wtime()
 
@@ -328,9 +329,9 @@ use onemkl_blas_omp_offload_lp64
         !$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp)
 #endif
 #endif
-        DO IB=1,NVIR
-           DO IA=1,NVIR
-              DO IC=1,iQVV
+        DO IC=1,iQVV
+           DO IB=1,NVIR
+              DO IA=1,NVIR
                  num = IC+(IB-1)*iQVV 
                  IB_n = (num -1)/ NQVV + 1
                  IC_n = mod(num-1, NQVV) + 1
