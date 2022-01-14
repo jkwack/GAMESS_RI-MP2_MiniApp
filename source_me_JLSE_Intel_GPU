@@ -1,0 +1,7 @@
+#!/bin/bash
+module load oneapi
+rm -f Makefile run_gpu.sh
+ln -s ./build_and_run/Makefile_JLSE_Intel_GPU Makefile
+ln -s ./build_and_run/run_gpu_JLSE_Intel.sh run_gpu.sh
+
+

@@ -117,6 +117,24 @@ The above data sets require significant I/O times before computing the correlati
         # You may modify this example script for your own tests.
 
 
+### JLSE Gen9 nodes at ALCF
+
+#### Build the executables 
+    rimp2-mkl-offload:      rimp2 with OpenMP offload + MKL on GPU
+
+    $ source source_me_JLSE_Intel_GPU
+    $ make clean
+    $ make all
+
+#### Run via an interactive job:
+    $ qsub -I -n 1 -t 120 -q iris
+    $ source source_me_JLSE_Intel_GPU
+    $ NMPI=x INPUT=xxx EXEC='rimp2-zzz' ./run_gpu.sh
+        # NMPI is the number of MPIs. If it doesn't exist, NMPI is set to 1.
+        # INPUT is the input name. If it doesn't exist, INPUT is set to benz.kern.
+        # EXEC is the executable name(s). If it doesn't exist. EXEC is set to 'rimp2-mkl-offload' for run_gpu.sh
+
+
 ## Figure-of-Merit (FOM)
 
 The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app reports three walltimes from MPI ranks: minimum, mean, and maximum. The time-to-solution (TTS) is the maximum wall time. For the baseline benchmark, use `w60.kern`. The reference data on SUMMIT are as follows:
