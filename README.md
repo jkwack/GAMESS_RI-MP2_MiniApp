@@ -1,6 +1,6 @@
-# GAMESS RI-MP2 mini-app for SC21 Roofline tutorial
+# GAMESS RI-MP2 mini-app for SC22 Roofline tutorial
 
-This is a simplifed version of GAMESS RI-MP2 mini-app for SC21 Roofline tutorial.  
+This is a simplifed version of GAMESS RI-MP2 mini-app for SC22 Roofline tutorial.  
 For more details about GAMESS RI-MP2 mini-app, please visit the following github repository:  
 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp
 
@@ -67,7 +67,7 @@ The above data sets require significant I/O times before computing the correlati
 ### Intel DevCould
 
 #### Build the executables
-    $ git clone --single-branch --branch tutorial-SC21 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp.git
+    $ git clone --single-branch --branch tutorial-SC22 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp.git
     $ cd GAMESS_RI-MP2_MiniApp/CPP/
     $ make all
 
@@ -84,7 +84,7 @@ The above data sets require significant I/O times before computing the correlati
     rimp2-V3-GPU: offloaded to GPU
     rimp2-V5-GPU: restructured for better performance on GPU
 
-    $ git clone --single-branch --branch tutorial-SC21 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp.git
+    $ git clone --single-branch --branch tutorial-SC22 https://github.com/jkwack/GAMESS_RI-MP2_MiniApp.git
     $ module load oneapi
     $ cd GAMESS_RI-MP2_MiniApp
     $ cd CPP
