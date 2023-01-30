@@ -114,15 +114,18 @@
 
 ! Hint: target region starts
       DO IC=1,JACT
+         E2_t = 0.0D00
           DO IB=1,NVIR
             DO IA=1,NVIR
-               FAC=2.0D00
-               IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
                Tijab=QVV(IA,IC,IB)/(eij(IACT+IC-1,JACT)-eab(IA,IB))
                Q_t=QVV(IA,IC,IB)+QVV(IA,IC,IB)
-               E2=E2 + FAC*Tijab*(Q_t-QVV(IB,IC,IA))
+               E2_t=E2_t + Tijab*(Q_t-QVV(IB,IC,IA))
             ENDDO
          ENDDO
+
+         FAC=2.0D00
+         IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
+         E2 = E2 + FAC*E2_t
       ENDDO
 ! Hint: target region ends
 

@@ -104,19 +104,26 @@
                   0.0D00, QVV,NVIR*JACT)
 !$omp end target data
 
-!$omp target teams distribute parallel do collapse(3) reduction(+:E2)
+!$omp target map(tofrom:E2)
+!$omp teams distribute reduction(+:E2) 
       DO IC=1,JACT
+         E2_t = 0.0D00
+!$omp parallel do reduction(+:E2_t) collapse(2)
           DO IB=1,NVIR
             DO IA=1,NVIR
-               FAC=2.0D00
-               IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
                Tijab=QVV(IA,IC,IB)/(eij(IACT+IC-1,JACT)-eab(IA,IB))
                Q_t=QVV(IA,IC,IB)+QVV(IA,IC,IB)
-               E2=E2 + FAC*Tijab*(Q_t-QVV(IB,IC,IA))
+               E2_t=E2_t + Tijab*(Q_t-QVV(IB,IC,IA))
             ENDDO
          ENDDO
+!$omp end parallel do
+
+         FAC=2.0D00
+         IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
+         E2 = E2 + FAC*E2_t
       ENDDO
-!$omp end target teams distribute parallel do
+!$omp end teams distribute
+!$omp end target
       END
 
 
