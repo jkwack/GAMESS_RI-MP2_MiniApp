@@ -1,0 +1,3 @@
+rm -f nvblas.conf
+ln -s nvblas.conf.POLARIS nvblas.conf
+

@@ -1,0 +1,23 @@
+FC=ftn
+
+EXE_TUTORIAL=my_rimp2
+EXE_TUTORIAL_V2=my_rimp2_v2
+EXE_TUTORIAL_CPU=my_rimp2_cpu
+
+CRAYLIBSCI_NVBLAS_LINK_FLAGS=-L/soft/compilers/cudatoolkit/cuda-11.2.2/lib64/ -lnvblas
+
+
+all: $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2) $(EXE_TUTORIAL_CPU)
+
+$(EXE_TUTORIAL): GAMESS-RIMP2-CorrEng-Tutorial.f90
+	$(FC) -mp=gpu -gpu=cc80,lineinfo -Minfo=mp,accel $^ -o my_rimp2 $(CRAYLIBSCI_NVBLAS_LINK_FLAGS)
+
+$(EXE_TUTORIAL_V2): GAMESS-RIMP2-CorrEng-Tutorial-V2.f90
+	$(FC) -mp=gpu -gpu=cc80,lineinfo -Minfo=mp,accel $^ -o my_rimp2_v2 $(CRAYLIBSCI_NVBLAS_LINK_FLAGS)
+
+# note that this requires PrgEnv-cray env! See the README.md
+$(EXE_TUTORIAL_CPU): GAMESS-RIMP2-CorrEng-Tutorial-cpu.f90
+	$(FC) -homp $^ -o my_rimp2_cpu /opt/cray/pe/libsci/21.08.1.2/cray/90/x86_64/lib/libsci_cray.so
+
+clean:
+	rm -rf *.o *.mod $(EXE_TUTORIAL) $(EXE_TUTORIAL_V2) $(EXE_TUTORIAL_CPU)
