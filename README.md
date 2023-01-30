@@ -12,7 +12,7 @@
  $ module switch PrgEnv-nvhpc PrgEnv-cray
  $ module unload craype-accel-nvidia80
  $ make -f Makefile_polaris my_rimp2_cpu
- $ OMP_PROC_BIND=spread OMP_NUM_THREADS=64 ./my_rimp2_cpu w30
+ $ OMP_PROC_BIND=spread OMP_NUM_THREADS=32 ./my_rimp2_cpu w30
  ```
 
  ## Run the CPU serial code with NVBLAS
