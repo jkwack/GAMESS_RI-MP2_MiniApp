@@ -6,6 +6,16 @@
 #endif
       module rimp2_shared
       use omp_lib
+#if defined(HIP)
+
+      use iso_c_binding
+      use hipfort
+      use hipfort_check
+      use hipfort_hipblas
+
+      type(c_ptr) :: HIP_handle = c_null_ptr
+#endif
+
 #if defined(CUBLAS) || defined(CUBLASXT)
         use cublasf
 #endif
@@ -24,7 +34,13 @@
       end module
 
       module rimp2_input
-        double precision,allocatable,dimension(:,:) :: eij,eab,B32
+        double precision,allocatable,dimension(:,:) :: eij,eab
+#if defined(HIP)        
+        double precision,allocatable,target,dimension(:,:) :: B32
+#else
+        double precision,allocatable,dimension(:,:) :: B32
+#endif
+
         double precision,allocatable,dimension(:) :: EIG
         integer:: NAUXBASD,NCOR,NACT,NVIR,NBF,NQVV
         double precision:: E2_ref
@@ -69,6 +85,8 @@
         write(*,*) 'You are running the code with cublas on GPU'
 #elif defined(CUBLASXT)
         write(*,*) 'You are running the code with cublasxt on GPU'
+#elif defined(HIP)
+        write(*,*) 'You are running the code with HIPFORT' 
 #else
         write(*,*) 'You are running the code serially'
 #endif
@@ -81,6 +99,8 @@
         cublasXt_deviceId(1) = 0      ! only for one GPU
         cublas_return = cublasXtDeviceSelect(cublas_handle, 1, cublasXt_deviceId)  ! only for one GPU
         cublas_return = cublasXtSetBlockDim(cublas_handle, 2048)
+#elif defined(HIP)
+        call hipblasCheck(hipblasCreate(HIP_handle))
 #endif
 
 
@@ -136,6 +156,8 @@
         cublas_return = cublasdestroy_v2(cublas_handle)
 #elif defined(CUBLASXT)
         cublas_return = cublasXtdestroy(cublas_handle)
+#elif defined(HIP)
+       call hipblasCheck(hipblasDestroy(HIP_handle))
 #endif
 
   120 CONTINUE
@@ -231,10 +253,21 @@ use onemkl_blas_omp_offload_lp64
 
       ! output
       double precision :: E2
+#if defined(HIP)
+      integer ::  m ,n,k
+      integer :: lda, ldb, ldc
+      double precision,parameter ::  alpha=1.0D00, beta=0.0D0
+      type(c_ptr) :: da = c_null_ptr, db = c_null_ptr, dc = c_null_ptr
 
+      !local data
+      double precision,allocatable,target,dimension(:,:,:),save :: QVV
+#else
+      !local data
+      double precision,allocatable,dimension(:,:,:),save :: QVV
+#endif
       ! local data
       double precision,save :: E2_omp
-      double precision,allocatable,dimension(:,:,:),save :: QVV
+
 #ifdef CPU
         !$omp threadprivate(E2_omp,QVV)
 #endif
@@ -256,7 +289,7 @@ use onemkl_blas_omp_offload_lp64
       E2_omp = 0.0D00
       ALLOCATE(QVV(NVIR,NQVV,NVIR))
 
-#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target enter data map(alloc: QVV) 
         !$omp target enter data map(to: eij,eab,B32) 
 #endif
@@ -275,23 +308,45 @@ use onemkl_blas_omp_offload_lp64
 
 
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target data use_device_ptr(B32,QVV)
 #endif
 #if defined(CUBLAS) || defined(CUBLASXT)
 #if defined(CUBLAS)
           cublas_return =  CUBLASDGEMM_v2 &
-#elif defined(CUBLASXT)
-          cublas_return =  cublasXtDgemm  &
-#endif
-                   (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
+                                     (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                      1.0D00, B32(1,IACT),NAUXBASD,                                  &
                      B32(1,JACT),NAUXBASD,                                  &
                   0.0D00, QVV,NVIR*iQVV)
         cublas_return = cudaDeviceSynchronize()
 
+#elif defined(CUBLASXT)
+          cublas_return =  cublasXtDgemm  &
+                   (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
+                     NVIR*iQVV,NVIR,NAUXBASD,                           &
+                     1.0D00, B32(1,IACT),NAUXBASD,                                  &
+                     B32(1,JACT),NAUXBASD,                                  &
+                  0.0D00, QVV,NVIR*iQVV)
+        cublas_return = cudaDeviceSynchronize()
+#endif
+#elif defined(HIP)
+        m=NVIR*iQVV
+        n=NVIR
+        k=NAUXBASD
+        da=c_loc(B32(1,IACT))
+        lda=NAUXBASD
+        db=c_loc(B32(1,JACT))
+        ldb=NAUXBASD
+        dc=c_loc(QVV(1,1,1))
+        ldc=NVIR*iQVV
+
+        call hipblasCheck(hipblasDgemm(HIP_handle,HIPBLAS_OP_T,HIPBLAS_OP_N, &
+                 m,n,k,alpha,da,lda,db,ldb,beta,dc,ldc))
+        call hipCheck(hipDeviceSynchronize())
+
 #elif defined(NVBLAS) || defined(CPU)
+        print*, 'Calling regular DGEMM'
         CALL DGEMM &
            ('T','N',  &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
@@ -316,13 +371,13 @@ use onemkl_blas_omp_offload_lp64
         stop 1
 #endif
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp end target data
 #endif
 
 
 
-#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
 #if defined(THREADLIMIT)
         !$omp target teams distribute parallel do collapse(3) reduction(+:E2_omp) private(ib,ia,ic,num,ib_n,ic_n,num2,ia_n2,ic_n2,tijab,q_t,fac) thread_limit(TLIMIT) num_teams(NTEAMS)
 #else
@@ -348,7 +403,7 @@ use onemkl_blas_omp_offload_lp64
               ENDDO
            ENDDO
         ENDDO
-#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
 !$omp end target teams distribute parallel do
 #endif
         ENDDO
@@ -357,7 +412,7 @@ use onemkl_blas_omp_offload_lp64
         !$omp end do
 #endif
 
-#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(INTEL_OFFLOAD) || defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target exit data map(release: QVV,eij,eab,B32) 
 #endif
 
@@ -372,8 +427,7 @@ use onemkl_blas_omp_offload_lp64
 #ifdef CPU
         !$OMP END PARALLEL
 #endif
-
-      END !*************************************************************
+      END  !*************************************************************
 
 
       SUBROUTINE RIMP2_ENERGY_WHOLE(E2,B32,eij,eab,             &
@@ -413,7 +467,7 @@ use onemkl_blas_omp_offload_lp64
       E2_omp = 0.0D00
       ALLOCATE(QVV(NVIR,NQVV,NVIR))
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target enter data map(alloc: QVV) 
         !$omp target enter data map(to: eij,eab,B32) 
 #endif
@@ -439,7 +493,7 @@ use onemkl_blas_omp_offload_lp64
         !$omp end do
 #endif
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target exit data map(release: QVV,eij,eab,B32) 
 #endif
 
@@ -475,17 +529,21 @@ use onemkl_blas_omp_offload_lp64
 
       ! buffer
       double precision :: QVV(NVIR,iQVV,NVIR)
+#if defined(HIP)
+      integer ::  m, n, k
+      integer :: lda, ldb, ldc
+      double precision,parameter ::  alpha=1.0D00, beta=0.0D0
+      type(c_ptr) :: da = c_null_ptr, db = c_null_ptr, dc = c_null_ptr
+#endif
 
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target data use_device_ptr(BI,BJ,QVV)
 #endif
 #if defined(CUBLAS) || defined(CUBLASXT)
 #if defined(CUBLAS)
           cublas_return =  CUBLASDGEMM_v2 &
-#elif defined(CUBLASXT)
-          cublas_return =  cublasXtDgemm  &
-#endif
                    (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                   1.0D00, BI,NAUXBASD,                                  &
@@ -493,6 +551,47 @@ use onemkl_blas_omp_offload_lp64
                   0.0D00, QVV,NVIR*iQVV)
         cublas_return = cudaDeviceSynchronize()
 
+#elif defined(CUBLASXT)
+          cublas_return =  cublasXtDgemm  &
+                   (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
+                     NVIR*iQVV,NVIR,NAUXBASD,                           &
+                  1.0D00, BI,NAUXBASD,                                  &
+                          BJ,NAUXBASD,                                  &
+                  0.0D00, QVV,NVIR*iQVV)
+        cublas_return = cudaDeviceSynchronize()
+#endif
+#elif defined(HIP)
+        da=c_loc(BI(1))
+        db=c_loc(BJ(1))
+        dc=c_loc(QVV(1,1,1))
+        !da=c_loc(BI)
+        !db=c_loc(BJ)
+        !dc=c_loc(QVV)
+        m=NVIR*iQVV
+        n=NVIR
+        k=NAUXBASD
+        lda=NAUXBASD
+        ldb=NAUXBASD
+        ldc=NVIR*iQVV
+
+
+        stime=omp_get_wtime()
+        call hipblasCheck(hipblasDgemm(HIP_handle, &
+         HIPBLAS_OP_T, & ! integer(kind(hipblas_op_n)), value
+         HIPBLAS_OP_N, & ! integer(kind(hipblas_op_n)), value
+         m, & ! integer(c_int), value
+         n, & ! integer(c_int), value
+         k, & ! integer(c_int), value
+         alpha, & ! real(c_double)
+         da, & ! type(c_ptr), value 
+         lda, & ! integer(c_int), value
+         db, & ! type(c_ptr), value
+         ldb, & ! integer(c_int), value
+         beta, & ! real(c_double)
+         dc, & ! type(c_ptr), value
+         ldc & ! integer(c_int), value
+        ))
+        call hipCheck(hipDeviceSynchronize())
 #else
         CALL DGEMM &
            ('T','N',  &
@@ -502,17 +601,17 @@ use onemkl_blas_omp_offload_lp64
                   0.0D00, QVV,NVIR*iQVV)
 #endif
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp end target data
 #endif
 
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp target map(tofrom:E2)
         !$omp teams distribute reduction(+:E2) 
 #endif
       DO IC=1,iQVV
         E2_t = 0.0D00
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
           !$omp parallel do reduction(+:E2_t) collapse(2)
 #endif
         DO IB=1,NVIR
@@ -522,14 +621,14 @@ use onemkl_blas_omp_offload_lp64
             E2_t=E2_t + Tijab*(Q_t-QVV(IB,IC,IA))
           ENDDO
         ENDDO
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
           !$omp end parallel do
 #endif
          FAC=2.0D00
          IF(IACT+IC-1.EQ.JACT) FAC=1.0D00
          E2 = E2 + FAC*E2_t
       ENDDO
-#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT)
+#if defined(NVBLAS) || defined(CUBLAS) || defined(CUBLASXT) || defined(HIP)
         !$omp end teams distribute
         !$omp end target
 #endif
