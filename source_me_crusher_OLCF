@@ -1,0 +1,12 @@
+module load cce/14.0.3 && module load craype-accel-amd-gfx90a && module load rocm/5.2.0
+
+# as of this writing (02/17/2023), users need to have their own installation of hipfort.
+# instructions to build hipfort appear on the README file.
+export PATH=/ccs/home/tiwari/external_tools/hipfort-install/hipfort/cce_14.0.3-rocm_5.2.0/bin:$PATH
+export HIPFORT=/ccs/home/tiwari/external_tools/hipfort-install/hipfort/cce_14.0.3-rocm_5.2.0
+
+rm -f Makefile nvblas.conf run_cpu.sh run_gpu.sh
+ln -s ./build_and_run/Makefile_crusher_OLCF Makefile
+ln -s ./build_and_run/run_cpu_crusher_OLCF.sh run_cpu.sh
+ln -s ./build_and_run/run_gpu_crusher_OLCF.sh run_gpu.sh
+
