@@ -140,7 +140,7 @@ The above data sets require significant I/O times before computing the correlati
     rimp2-hip:       rimp2 with OpenMP offload + HIPBLAS on GPU
     rimp2-cpu:       rimp2 with OpenMP (CPU only)
 
-    Note the instructions on installing hipfort in source_me_crusher_OLCF file
+    Note the instructions on installing hipfort in https://code.ornl.gov/t4p/build_hipfort.git ; users need to have their own installation of hipfort.
     $ source source_me_crusher_OLCF
     $ make clean
     $ make
