@@ -6,13 +6,12 @@
 #endif
       module rimp2_shared
       use omp_lib
-#if defined(HIP)
 
+#if defined(HIP)
       use iso_c_binding
       use hipfort
       use hipfort_check
       use hipfort_hipblas
-
       type(c_ptr) :: HIP_handle = c_null_ptr
 #endif
 
@@ -314,7 +313,7 @@ use onemkl_blas_omp_offload_lp64
 #if defined(CUBLAS) || defined(CUBLASXT)
 #if defined(CUBLAS)
           cublas_return =  CUBLASDGEMM_v2 &
-                                     (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
+                   (cublas_handle,CUBLAS_OP_T,CUBLAS_OP_N,              &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                      1.0D00, B32(1,IACT),NAUXBASD,                                  &
                      B32(1,JACT),NAUXBASD,                                  &
@@ -346,7 +345,6 @@ use onemkl_blas_omp_offload_lp64
         call hipCheck(hipDeviceSynchronize())
 
 #elif defined(NVBLAS) || defined(CPU)
-        print*, 'Calling regular DGEMM'
         CALL DGEMM &
            ('T','N',  &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
@@ -427,7 +425,8 @@ use onemkl_blas_omp_offload_lp64
 #ifdef CPU
         !$OMP END PARALLEL
 #endif
-      END  !*************************************************************
+
+      END !*************************************************************
 
 
       SUBROUTINE RIMP2_ENERGY_WHOLE(E2,B32,eij,eab,             &
@@ -564,9 +563,6 @@ use onemkl_blas_omp_offload_lp64
         da=c_loc(BI(1))
         db=c_loc(BJ(1))
         dc=c_loc(QVV(1,1,1))
-        !da=c_loc(BI)
-        !db=c_loc(BJ)
-        !dc=c_loc(QVV)
         m=NVIR*iQVV
         n=NVIR
         k=NAUXBASD

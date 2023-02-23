@@ -11,6 +11,7 @@ LDFLAGS_HIP=-lhipblas
 EXE_SERIAL=rimp2-cpu
 FFLAGS_SERIAL=-homp -O3
 
+
 EXES=$(EXE_HIP) $(EXE_SERIAL)
 
 all: $(EXES)
@@ -20,7 +21,7 @@ $(EXE_HIP): $(SRC)
 	rm -rf *.o *.mod
 
 $(EXE_SERIAL): $(SRC)
-	$(FC) $(FFLAGS_SERIAL) $^ -o $@ $(LDFLAGS_ESSL)
+	$(FC) $(FFLAGS_SERIAL) $^ -o $@ $(LDFLAGS_HIP)
 	rm -rf *.o *.mod
 
 .SUFFIXES:

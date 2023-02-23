@@ -27,7 +27,7 @@ fi
 if [ "$EXEC" != "" ]; then
   echo "   EXEC is set to $EXEC."
 else
-  EXEC='rimp2-hip rimp2-serial'
+  EXEC='rimp2-hip'
   echo "   EXEC is set to $EXEC. For another EXEC, use EXEC='x y' before this job script."
 fi
 
@@ -38,7 +38,7 @@ fi
 for EXE in $EXEC; do
   echo -e "\n\n[[[Running $EXE with $NMPI MPI rank(s)...]]]"
   set -x
-  time -p OMP_NUM_THREADS=1 srun -N${NNODES} -n${NMPI} -c1 --gpus-per-node=8 --gpu-bind=closest ./$EXE $INPUT $NQVV
+  time -p OMP_NUM_THREADS=8 srun -N${NNODES} -n${NMPI} -c8 --gpus-per-node=8 --gpu-bind=closest ./$EXE $INPUT $NQVV
   set +x
   #OMP_NUM_THREADS=1 jsrun -n $NMPI -c 1 -g 1  ./$EXE $INPUT $NQVV
   echo -e "\n\n"

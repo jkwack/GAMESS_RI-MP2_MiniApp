@@ -47,7 +47,10 @@ fi
 
 for EXE in $EXEC; do
   echo -e "\n\n[[[Running $EXE with $NMPI MPI rank(s) and $NTHREAD threads/MPI ...]]]"
-  OMP_PROC_BIND=spread OMP_NUM_THREADS=$NTHREAD jsrun -n $NMPI -c $NTHREAD -a 1 -b packed:$NTHREAD -g 0 ./$EXE $INPUT $NQVV
+  set -x
+  OMP_NUM_THREADS=8 srun --distribution=*:block -N${NNODES} -n${NMPI} -c8 ./hello_jobstep
+  time -p OMP_NUM_THREADS=8 srun --distribution=*:block -N${NNODES} -n${NMPI} -c8 ./$EXE $INPUT $NQVV
+  set +x
   echo -e "\n\n"
 done
 
