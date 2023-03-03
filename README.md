@@ -137,8 +137,8 @@ The above data sets require significant I/O times before computing the correlati
 ### Crusher nodes at OLCF
 
 #### Build the executables
-    rimp2-hip:       rimp2 with OpenMP offload + HIPBLAS on GPU
-    rimp2-cpu:       rimp2 with OpenMP (CPU only)
+    rimp2-hipblas:       rimp2 with OpenMP offload + HIPBLAS on GPU
+    rimp2-cpu:           rimp2 with OpenMP (CPU only)
 
     Note the instructions on installing hipfort in https://code.ornl.gov/t4p/build_hipfort.git ; users need to have their own installation of hipfort.
     $ source source_me_crusher_OLCF
@@ -148,7 +148,7 @@ The above data sets require significant I/O times before computing the correlati
 #### Run via an interactive job: 
     $ salloc -N 1 --threads-per-core=2 --core-spec=0 -A CHM135_crusher -t 06:00:00
     $ source source_me_crusher_OLCF
-    $ NMPI=8 INPUT=w30.rand EXEC='rimp2-hip' ./run_gpu.sh
+    $ NMPI=8 INPUT=w30.rand EXEC='rimp2-hipblas' ./run_gpu.sh
 
 #### Run via a batch job:
     $ sbatch batch_crusher.sh

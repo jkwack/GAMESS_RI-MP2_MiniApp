@@ -27,7 +27,7 @@ fi
 if [ "$EXEC" != "" ]; then
   echo "   EXEC is set to $EXEC."
 else
-  EXEC='rimp2-hip'
+  EXEC='rimp2-hipblas'
   echo "   EXEC is set to $EXEC. For another EXEC, use EXEC='x y' before this job script."
 fi
 
