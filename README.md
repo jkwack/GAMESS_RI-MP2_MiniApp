@@ -134,7 +134,26 @@ The above data sets require significant I/O times before computing the correlati
         # INPUT is the input name. If it doesn't exist, INPUT is set to benz.kern.
         # EXEC is the executable name(s). If it doesn't exist. EXEC is set to 'rimp2-mkl-offload' for run_gpu.sh
 
+### Crusher nodes at OLCF
 
+#### Build the executables
+    rimp2-hipblas:       rimp2 with OpenMP offload + HIPBLAS on GPU
+    rimp2-cpu:           rimp2 with OpenMP (CPU only)
+
+    Note the instructions on installing hipfort in https://code.ornl.gov/t4p/build_hipfort.git ; users need to have their own installation of hipfort.
+    $ source source_me_crusher_OLCF
+    $ make clean
+    $ make
+
+#### Run via an interactive job: 
+    $ salloc -N 1 --threads-per-core=2 --core-spec=0 -A CHM135_crusher -t 06:00:00
+    $ source source_me_crusher_OLCF
+    $ NMPI=8 INPUT=w30.rand EXEC='rimp2-hipblas' ./run_gpu.sh
+
+#### Run via a batch job:
+    $ sbatch batch_crusher.sh
+    Please note the job parameters and change them to fit your run.
+ 
 ## Figure-of-Merit (FOM)
 
 The Figure-of-Merit (FOM) is the time-to-solution of the input. The mini-app reports three walltimes from MPI ranks: minimum, mean, and maximum. The time-to-solution (TTS) is the maximum wall time. For the baseline benchmark, use `w60.kern`. The reference data on SUMMIT are as follows:

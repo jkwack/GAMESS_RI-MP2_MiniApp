@@ -1,0 +1,32 @@
+FC=hipfc
+
+SDIR=./source/
+SRC=${SDIR}/rimp2_energy_whole_KERN.f90
+#SRC_CUBLASF=${SDIR}/cublasf.f90
+
+EXE_HIPBLAS=rimp2-hipblas
+FFLAGS_HIPBLAS=-homp -O3 -DHIPBLAS
+LDFLAGS_HIPBLAS=-lhipblas
+
+EXE_SERIAL=rimp2-cpu
+FFLAGS_SERIAL=-homp -O3
+
+
+EXES=$(EXE_HIPBLAS) $(EXE_SERIAL)
+
+all: $(EXES)
+
+$(EXE_HIPBLAS): $(SRC)
+	$(FC) $(FFLAGS_HIPBLAS) $^ -o $@ $(LDFLAGS_HIPBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_SERIAL): $(SRC)
+	$(FC) $(FFLAGS_SERIAL) $^ -o $@ $(LDFLAGS_HIPBLAS)
+	rm -rf *.o *.mod
+
+.SUFFIXES:
+.SUFFIXES: .c .o .f90 .cpp 
+.PHONY: clean
+clean:
+	rm -rf *.o *.mod $(EXES)
+
