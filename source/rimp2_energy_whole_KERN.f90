@@ -134,7 +134,7 @@
       ! Actual computation
       ! init E2_mpi
       E2_mpi=0.0D00
-      print *, "time: ", omp_get_wtime()-st
+!      print *, "time: ", omp_get_wtime()-st
       ! tic
       st=omp_get_wtime()
 

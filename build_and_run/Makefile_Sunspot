@@ -4,9 +4,9 @@ SDIR=./source/
 SRC=${SDIR}/rimp2_energy_whole_KERN.f90
 
 EXE_MKL_OFFLOAD=rimp2-mkl-offload
-FFLAGS_MKL_OFFLOAD=-Ofast -i8 -fiopenmp -fopenmp-targets=spir64 -cpp -DMKL_ILP64 -cpp -DINTEL -DINTEL_OFFLOAD -DCOMBINED_VERSION -g -qmkl -fsycl
+FFLAGS_MKL_OFFLOAD=-Ofast -i8 -fiopenmp -fopenmp-targets=spir64 -cpp -DMKL_ILP64 -DINTEL -DINTEL_OFFLOAD -DCOMBINED_VERSION -g -qmkl -fsycl
 #FFLAGS_MKL_OFFLOAD += -DNOMPI
-LDFLAGS_MKL=-lmkl_sycl -lsycl 
+LDFLAGS_MKL=-lmkl_sycl 
 
 EXES=$(EXE_MKL_OFFLOAD)
 
