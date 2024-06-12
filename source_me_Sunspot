@@ -1,0 +1,5 @@
+#!/bin/bash
+module load oneapi
+rm -f Makefile run_gpu.sh
+ln -s ./build_and_run/Makefile_Sunspot Makefile
+ln -s ./build_and_run/run_gpu_Sunspot.sh run_gpu.sh

@@ -352,18 +352,14 @@ use onemkl_blas_omp_offload_lp64
                           B32(1,JACT),NAUXBASD,                                  &
                   0.0D00, QVV,NVIR*iQVV)
 #elif defined(INTEL_OFFLOAD)
-         !$omp target variant dispatch use_device_ptr(B32,QVV)
-
+        !$omp dispatch
         CALL DGEMM &
            ('T','N',  &
                      NVIR*iQVV,NVIR,NAUXBASD,                           &
                   1.0D00, B32(1,IACT),NAUXBASD,                                  &
                           B32(1,JACT),NAUXBASD,                                  &
                   0.0D00, QVV,NVIR*iQVV)
-
-
-        !$omp end target variant dispatch
-
+        !$omp end dispatch
 #else
         print *, "incorrect macro choices"
         stop 1
