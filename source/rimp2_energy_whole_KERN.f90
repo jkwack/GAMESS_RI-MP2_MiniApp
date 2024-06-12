@@ -696,6 +696,15 @@ use onemkl_blas_omp_offload_lp64
           NACT=240
           NVIR=1140
           NBF=1500
+        else if (filename.eq.'w90.rand') then
+          if (MASWRK) then
+            write(*,'(5x,A)') 'Generating arbitrary input data with the structure of w90.kern'
+          endif
+          NAUXBASD=7560
+          NCOR=90
+          NACT=360
+          NVIR=1710
+          NBF=2250
         else
           read(filename,*,iostat=ierr) nwater
           if ( (ierr.eq.0) .and. (nwater .gt. 0) ) then
