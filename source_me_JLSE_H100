@@ -1,0 +1,5 @@
+module load nvhpc/nvhpc/24.1 cuda/12.3.0
+rm -f Makefile nvblas.conf set_affinity_gpu.sh
+ln -s ./build_and_run/Makefile_JLSE_H100 Makefile
+ln -s ./build_and_run/nvblas.conf.JLSE_H100 nvblas.conf
+ln -s ./build_and_run/set_affinity_gpu_JLSE_H100.sh set_affinity_gpu.sh

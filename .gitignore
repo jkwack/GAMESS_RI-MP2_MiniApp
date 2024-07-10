@@ -22,4 +22,5 @@ run_cpu.sh
 run_gpu.sh
 nvblas.conf
 GAMESS-RIMP2-*
+set_affinity_gpu.sh
 

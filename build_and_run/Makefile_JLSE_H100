@@ -1,0 +1,43 @@
+FC=mpifort
+
+SDIR=./source/
+SRC=${SDIR}/rimp2_energy_whole_KERN.f90
+SRC_CUBLASF=${SDIR}/cublasf.f90
+
+EXE_NVBLAS=rimp2-nvblas
+FFLAGS_NVBLAS=-O3 -cpp -mp=gpu -gpu=cc90,lineinfo -Minfo=mp,accel -DNVBLAS -g
+LDFLAGS_NVBLAS=-lnvblas  
+
+EXE_CUBLAS=rimp2-cublas
+FFLAGS_CUBLAS=-O3 -cpp -mp=gpu -gpu=cc90,lineinfo -Minfo=mp,accel -DCUBLAS -g
+LDFLAGS_CUBLAS=-lcublas -lcudart cublasf.o
+
+EXE_CUBLASXT=rimp2-cublasxt
+FFLAGS_CUBLASXT=-O3 -cpp -mp=gpu -gpu=cc90,lineinfo -Minfo=mp,accel -DCUBLASXT -g
+
+EXES=$(EXE_NVBLAS) $(EXE_CUBLAS) $(EXE_CUBLASXT) 
+
+all: $(EXES)
+
+
+$(EXE_NVBLAS): $(SRC)
+	$(FC) $(FFLAGS_NVBLAS) $^ -o $@ $(LDFLAGS_NVBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_CUBLAS): $(SRC)
+	$(FC) $(FFLAGS_CUBLAS) -c $(SRC_CUBLASF)
+	$(FC) $(FFLAGS_CUBLAS) $^ -o $@ $(LDFLAGS_CUBLAS)
+	rm -rf *.o *.mod
+
+$(EXE_CUBLASXT): $(SRC)
+	$(FC) $(FFLAGS_CUBLASXT) -c $(SRC_CUBLASF)
+	$(FC) $(FFLAGS_CUBLASXT) $^ -o $@ $(LDFLAGS_CUBLAS)
+	rm -rf *.o *.mod
+
+
+.SUFFIXES:
+.SUFFIXES: .c .o .f90 .cu .cpp .cuf
+.PHONY: clean
+clean:
+	rm -rf *.o *.mod $(EXES)
+
