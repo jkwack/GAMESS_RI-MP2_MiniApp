@@ -1,0 +1,12 @@
+#!/bin/bash
+module load  intel-oneapi-mkl/2024.1.0/oneapi/xps7uyz6   intel-oneapi-compilers/2024.1.0/gcc/wadpqv2p
+source ~/mpich-install/source_me_mpich
+unset ZE_AFFINITY_MASK
+export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+
+export I_MPI_PIN_DOMAIN=12
+export OMP_NUM_THREADS=12
+export I_MPI_PIN_CELL=core
+
+rm -f Makefile run_gpu.sh
+ln -s ./build_and_run/Makefile_Sunspot Makefile
